@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bapakin Workspace V7.6 (Sistem Keamanan & Sosmed)</title>
+    <title>Bapakin Workspace V7.7 (Mobile Fit & Direktori WA)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -13,7 +13,7 @@
 
         /* --- PENGATURAN HAK AKSES (VIEWER) --- */
         body.role-viewer .admin-only { display: none !important; }
-        body.role-viewer .dashboard-grid { grid-template-columns: 1fr !important; } /* Memperlebar tabel saat form disembunyikan */
+        body.role-viewer .dashboard-grid { grid-template-columns: 1fr !important; }
 
         /* --- LOGIN SCREEN --- */
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -57,7 +57,7 @@
         .sync-status.success { background: #d1fae5; color: #059669; }
         .sync-status.syncing { background: #fef3c7; color: #d97706; }
 
-        .content-container { flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth; }
+        .content-container { flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .page-section { display: none; animation: fadeIn 0.3s ease; }
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -90,7 +90,7 @@
         .btn-outline:hover { background: #e2e8f0; }
         .btn-sm { padding: 5px 10px; width: auto; font-size: 11px; }
 
-        .table-responsive { overflow-x: auto; }
+        .table-responsive { overflow-x: auto; width: 100%; }
         table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
         th { background: #f8fafc; color: #475569; }
@@ -98,17 +98,37 @@
         .bg-gray { background: #f1f5f9; color: #475569; } .bg-yellow { background: #fef3c7; color: #d97706; } .bg-green { background: #dcfce3; color: #166534; } .bg-blue { background: #dbeafe; color: #1e40af; }
 
         .chart-container { position: relative; height: 250px; width: 100%; margin-top: 10px; }
-        .wa-box { text-align: center; padding: 40px 20px; background: #e0ffe4; border-radius: 12px; border: 2px dashed #25D366; }
-        .wa-box i { font-size: 60px; color: #25D366; margin-bottom: 15px; }
+        
+        /* CARD KONTAK TIM */
+        .contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .contact-card { background: #f8fafc; border: 1px solid var(--border); padding: 15px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .contact-avatar { width: 50px; height: 50px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #64748b; margin-bottom: 10px; }
+        .contact-name { font-weight: bold; color: var(--dark); font-size: 14px; margin-bottom: 3px; }
+        .contact-role { font-size: 11px; color: #64748b; margin-bottom: 12px; background: white; padding: 2px 8px; border-radius: 20px; border: 1px solid #cbd5e1;}
 
-        @media (max-width: 992px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        /* --- PENYEMPURNAAN MOBILE (RESPONSIF PENUH) --- */
+        @media (max-width: 992px) { 
+            .dashboard-grid { grid-template-columns: 1fr; } 
+        }
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: -260px; height: 100%; }
-            .sidebar.open { left: 0; }
+            .sidebar.open { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
             .menu-toggle { display: block; }
             .close-sidebar { display: block; }
-            .stats-wrapper { grid-template-columns: 1fr; }
+            .content-container { padding: 10px; }
+            .card { padding: 15px; }
+            
+            /* Form tersusun ke bawah di HP */
+            .grid-2 { grid-template-columns: 1fr !important; gap: 0; } 
+            
+            /* Stats tersusun rapi di HP */
+            .stats-wrapper { grid-template-columns: 1fr !important; }
+            
+            /* Grafik dikecilkan agar muat */
             .chart-container { height: 200px; }
+            
+            /* Tabel geser (swipeable) lebih rapi */
+            th, td { padding: 10px 8px; font-size: 11px; }
         }
     </style>
 </head>
@@ -138,7 +158,7 @@
                 <li><a class="nav-link" onclick="switchPage('page-analitik', 'Analitik & Performa', this)"><i class="fas fa-chart-pie"></i> Analitik & Views</a></li>
                 <li><a class="nav-link" onclick="switchPage('page-umkm', 'Database Kolaborasi UMKM', this)"><i class="fas fa-store"></i> Database UMKM</a></li>
                 <li><a class="nav-link" onclick="switchPage('page-charity', 'Laporan Finansial & Charity', this)"><i class="fas fa-wallet"></i> Charity & Finansial</a></li>
-                <li><a class="nav-link" onclick="switchPage('page-forum', 'Forum Tongkrongan Bapakin', this)"><i class="fab fa-whatsapp"></i> Forum Bapakin</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-kontak', 'Direktori Kontak Tim', this)"><i class="fas fa-address-book"></i> Kontak Tim WA</a></li>
             </ul>
             
             <!-- SOSMED & LOGOUT -->
@@ -166,7 +186,6 @@
                 <!-- HALAMAN 1: KALENDER -->
                 <div id="page-kalender" class="page-section active">
                     <div class="dashboard-grid">
-                        
                         <!-- FORM INPUT (Hanya Admin) -->
                         <div class="card admin-only">
                             <div class="card-header"><i class="fas fa-edit"></i> <span id="formTitleText">Form Kegiatan</span></div>
@@ -284,14 +303,21 @@
                     </div>
                 </div>
 
-                <!-- HALAMAN 5: FORUM -->
-                <div id="page-forum" class="page-section">
-                    <div class="card" style="max-width: 600px; margin: 0 auto; margin-top: 20px;">
-                        <div class="wa-box">
-                            <i class="fab fa-whatsapp"></i>
-                            <h2 style="margin:0 0 10px 0; color:#128C7E;">Grup Eksklusif Bapakin</h2>
-                            <p style="color:#475569; margin-bottom:20px;">Masuk ke ruang obrolan resmi untuk kordinasi tim dan komunitas.</p>
-                            <a href="https://chat.whatsapp.com/MasukanLinkGrupBapakDiSini" target="_blank" class="btn btn-success" style="font-size:16px; padding:12px;"><i class="fas fa-sign-in-alt"></i> Buka WhatsApp Group Sekarang</a>
+                <!-- HALAMAN 5: DIREKTORI KONTAK TIM WA -->
+                <div id="page-kontak" class="page-section">
+                    <div class="dashboard-grid">
+                        <div class="card admin-only">
+                            <div class="card-header"><i class="fas fa-user-plus"></i> Tambah Kontak Tim</div>
+                            <div class="form-group"><label>Nama Anggota</label><input type="text" id="ktkName" class="form-control" placeholder="Contoh: Pak Muslih"></div>
+                            <div class="form-group"><label>Peran / Jabatan</label><input type="text" id="ktkRole" class="form-control" placeholder="Contoh: Editor / Kameramen"></div>
+                            <div class="form-group"><label>Nomor WhatsApp (Cth: 0812...)</label><input type="number" id="ktkWA" class="form-control" placeholder="08123456789"></div>
+                            <button class="btn btn-primary" onclick="saveKontak()"><i class="fas fa-save"></i> Simpan ke Direktori</button>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-address-book"></i> Direktori Tim Bapakin</div>
+                            <div class="contact-grid" id="kontakBody">
+                                <!-- Data Kontak Muncul di Sini -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -301,7 +327,7 @@
     </div>
 
     <script>
-        // --- KONFIGURASI 2 AKUN (ROLE-BASED) ---
+        // --- KONFIGURASI AKUN ---
         const DATA_AKUN = {
             "admin": { pass: "admin123", role: "admin" },
             "tim": { pass: "bapakin2026", role: "viewer" }
@@ -329,19 +355,12 @@
             if (DATA_AKUN[u] && DATA_AKUN[u].pass === p) {
                 localStorage.setItem('bapakin_logged_in', 'true');
                 localStorage.setItem('bapakin_role', DATA_AKUN[u].role);
-                
-                if(DATA_AKUN[u].role === 'viewer') {
-                    document.body.classList.add('role-viewer');
-                } else {
-                    document.body.classList.remove('role-viewer');
-                }
-                
+                if(DATA_AKUN[u].role === 'viewer') { document.body.classList.add('role-viewer'); } 
+                else { document.body.classList.remove('role-viewer'); }
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'flex';
                 fetchFromCloud(); 
-            } else {
-                err.style.display = 'block';
-            }
+            } else { err.style.display = 'block'; }
         }
 
         function doLogout() {
@@ -356,10 +375,8 @@
 
         // --- CORE APP ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdDGM2CrhE1Jt0fJF2a-kGQq52-G0Nc6dKMPM18wd5v4B1cPNDDxmGHT2rAflpJG_p/exec';
-        let tasks = []; 
-        let pChart, bChart;
-        let editingId = null;       
-        let editingFinId = null;    
+        let tasks = []; let pChart, bChart;
+        let editingId = null; let editingFinId = null;    
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
         
@@ -397,15 +414,16 @@
             renderKalender();
             renderUMKM();
             renderFinance();
-            if(document.getElementById('page-analitik').classList.contains('active')) {
-                drawCharts();
-            }
+            renderKontak();
+            if(document.getElementById('page-analitik').classList.contains('active')) { drawCharts(); }
         }
 
         // --- MODULE KALENDER ---
         function renderKalender() {
             const searchKw = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-            let mainTasks = tasks.filter(t => t.type !== 'KEUANGAN');
+            
+            // Filter agar Data Keuangan & Kontak tidak masuk ke kalender konten
+            let mainTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK');
             
             if (searchKw) {
                 mainTasks = mainTasks.filter(t => 
@@ -439,91 +457,68 @@
         }
 
         function editTask(id) {
-            const t = tasks.find(x => x.id === id);
-            if(!t) return;
+            const t = tasks.find(x => x.id === id); if(!t) return;
             editingId = id;
-            document.getElementById('taskTitle').value = t.title;
-            document.getElementById('taskType').value = t.type;
-            document.getElementById('taskStatus').value = t.status;
-            document.getElementById('taskDate').value = t.date || '';
-            document.getElementById('taskViews').value = t.views || '';
-            document.getElementById('taskLink').value = t.link || '';
+            document.getElementById('taskTitle').value = t.title; document.getElementById('taskType').value = t.type;
+            document.getElementById('taskStatus').value = t.status; document.getElementById('taskDate').value = t.date || '';
+            document.getElementById('taskViews').value = t.views || ''; document.getElementById('taskLink').value = t.link || '';
             
             document.getElementById('formTitleText').innerText = 'Update Jadwal / Tautan';
-            const btnSubmit = document.getElementById('btnSubmit');
-            btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
-            btnSubmit.classList.replace('btn-primary', 'btn-success');
-            document.getElementById('btnCancel').style.display = 'block';
+            const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
+            btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancel').style.display = 'block';
             document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function cancelEdit() {
             editingId = null;
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('taskType').value = 'VLOG';
-            document.getElementById('taskStatus').value = 'Rencana';
-            document.getElementById('taskDate').value = '';
-            document.getElementById('taskViews').value = '';
-            document.getElementById('taskLink').value = '';
+            document.getElementById('taskTitle').value = ''; document.getElementById('taskType').value = 'VLOG';
+            document.getElementById('taskStatus').value = 'Rencana'; document.getElementById('taskDate').value = '';
+            document.getElementById('taskViews').value = ''; document.getElementById('taskLink').value = '';
             
             document.getElementById('formTitleText').innerText = 'Form Kegiatan';
-            const btnSubmit = document.getElementById('btnSubmit');
-            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Simpan Data';
-            btnSubmit.classList.replace('btn-success', 'btn-primary');
-            document.getElementById('btnCancel').style.display = 'none';
+            const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Simpan Data';
+            btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancel').style.display = 'none';
         }
 
         function saveTask() {
             const title = document.getElementById('taskTitle').value; if(!title) return alert('Judul wajib diisi!');
             let actionType = 'tambah';
             let taskObj = {
-                id: editingId || Date.now().toString(),
-                title: title, type: document.getElementById('taskType').value, status: document.getElementById('taskStatus').value,
+                id: editingId || Date.now().toString(), title: title, type: document.getElementById('taskType').value, status: document.getElementById('taskStatus').value,
                 date: document.getElementById('taskDate').value, time: '', link: document.getElementById('taskLink').value, views: document.getElementById('taskViews').value || 0, note: ''
             };
-
-            if (editingId) {
-                actionType = 'update';
-                const idx = tasks.findIndex(t => t.id === editingId);
-                if(idx !== -1) tasks[idx] = taskObj;
-            } else { tasks.push(taskObj); }
-
+            if (editingId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingId); if(idx !== -1) tasks[idx] = taskObj; } 
+            else { tasks.push(taskObj); }
             cancelEdit(); renderAll(); sendToCloud(actionType, taskObj);
         }
 
         function delTask(id) {
-            if(confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
-                const tk = tasks.find(t => t.id === id);
-                tasks = tasks.filter(t => t.id !== id);
-                if (editingId === id) cancelEdit(); 
-                renderAll(); sendToCloud('hapus', tk);
+            if(confirm('Hapus jadwal ini?')) {
+                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
+                if (editingId === id) cancelEdit(); renderAll(); sendToCloud('hapus', tk);
             }
         }
 
         function startDictation() {
             const btn = document.querySelector('.mic-btn');
             if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
-                const SpeechRec = window.webkitSpeechRecognition || window.SpeechRecognition;
-                const rec = new SpeechRec();
+                const SpeechRec = window.webkitSpeechRecognition || window.SpeechRecognition; const rec = new SpeechRec();
                 rec.lang = 'id-ID'; rec.continuous = false; rec.interimResults = false;
                 rec.onstart = () => { btn.classList.add('recording'); document.getElementById('taskTitle').placeholder = "Mendengarkan..."; };
                 rec.onresult = (e) => { document.getElementById('taskTitle').value = e.results[0][0].transcript; };
-                rec.onerror = (e) => { alert("Pastikan Anda mengizinkan akses mikrofon di pengaturan browser."); };
+                rec.onerror = (e) => { alert("Izinkan akses mikrofon di pengaturan browser Anda."); };
                 rec.onend = () => { btn.classList.remove('recording'); document.getElementById('taskTitle').placeholder = "Contoh: Rilis Produk / Syuting..."; };
                 rec.start();
-            } else { alert('Maaf, browser Anda tidak mendukung fitur Suara. Gunakan Google Chrome.'); }
+            } else { alert('Gunakan Google Chrome untuk fitur Suara.'); }
         }
 
         // --- MODULE UMKM ---
         function saveUmkm() {
             let n = document.getElementById('umkmName').value; let ty = document.getElementById('umkmType').value; let tg = document.getElementById('umkmTarget').value;
             if(!n) return alert('Nama UMKM wajib diisi');
-            let taskObj = {
-                id: Date.now().toString(), title: `[UMKM] ${n}`, type: 'PROMOTE', status: 'Rencana', date: tg, time: '', link: '', views: 0, note: ty
-            };
+            let taskObj = { id: Date.now().toString(), title: `[UMKM] ${n}`, type: 'PROMOTE', status: 'Rencana', date: tg, time: '', link: '', views: 0, note: ty };
             tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj);
-            document.getElementById('umkmName').value = ''; document.getElementById('umkmType').value = '';
-            alert("UMKM ditambahkan ke Kalender Proyek Utama.");
+            document.getElementById('umkmName').value = ''; document.getElementById('umkmType').value = ''; alert("UMKM ditambahkan ke Kalender Proyek.");
         }
         function renderUMKM() {
             const uList = tasks.filter(t => t.type === 'PROMOTE' && t.title.includes('[UMKM]'));
@@ -541,10 +536,8 @@
             let tIn = 0; let tOut = 0;
             
             fList.reverse().forEach(f => {
-                let isInc = f.status === 'INCOME';
-                let amt = parseInt(f.views) || 0;
+                let isInc = f.status === 'INCOME'; let amt = parseInt(f.views) || 0;
                 if(isInc) tIn += amt; else tOut += amt;
-                
                 tb.innerHTML += `
                     <tr>
                         <td>${f.date ? new Date(f.date).toLocaleDateString('id-ID') : '-'}</td>
@@ -557,88 +550,90 @@
                         </td>
                     </tr>`;
             });
-            
             let saldoAkhir = tIn - tOut;
-            document.getElementById('totIn').innerText = formatRp(tIn);
-            document.getElementById('totOut').innerText = formatRp(tOut);
+            document.getElementById('totIn').innerText = formatRp(tIn); document.getElementById('totOut').innerText = formatRp(tOut);
             document.getElementById('totSaldo').innerText = formatRp(saldoAkhir);
-            
-            if(saldoAkhir < 0) {
-                document.getElementById('totSaldo').style.color = 'var(--danger)';
-            } else {
-                document.getElementById('totSaldo').style.color = 'var(--info)';
-            }
-
+            if(saldoAkhir < 0) { document.getElementById('totSaldo').style.color = 'var(--danger)'; } else { document.getElementById('totSaldo').style.color = 'var(--info)'; }
             if(fList.length === 0) tb.innerHTML = '<tr><td colspan="5" align="center" style="color:#64748b; padding:20px;">Belum ada riwayat transaksi.</td></tr>';
         }
 
         function editFinance(id) {
-            const f = tasks.find(x => x.id === id);
-            if(!f) return;
-            
-            editingFinId = id;
-            document.getElementById('finType').value = f.status; 
-            document.getElementById('finAmount').value = parseInt(f.views) || 0;
-            document.getElementById('finNote').value = String(f.title).replace('[KEUANGAN] ', '');
-            document.getElementById('finDate').value = f.date || '';
-            
+            const f = tasks.find(x => x.id === id); if(!f) return; editingFinId = id;
+            document.getElementById('finType').value = f.status; document.getElementById('finAmount').value = parseInt(f.views) || 0;
+            document.getElementById('finNote').value = String(f.title).replace('[KEUANGAN] ', ''); document.getElementById('finDate').value = f.date || '';
             document.getElementById('finFormTitle').innerText = 'Update Transaksi';
-            const btnSubmit = document.getElementById('btnSubmitFin');
-            btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
-            btnSubmit.classList.replace('btn-primary', 'btn-success');
-            document.getElementById('btnCancelFin').style.display = 'block';
-            
+            const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
+            btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancelFin').style.display = 'block';
             document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function cancelEditFinance() {
-            editingFinId = null;
-            document.getElementById('finType').value = 'INCOME';
-            document.getElementById('finAmount').value = '';
-            document.getElementById('finNote').value = '';
-            document.getElementById('finDate').value = '';
-            
+            editingFinId = null; document.getElementById('finType').value = 'INCOME'; document.getElementById('finAmount').value = '';
+            document.getElementById('finNote').value = ''; document.getElementById('finDate').value = '';
             document.getElementById('finFormTitle').innerText = 'Input Transaksi';
-            const btnSubmit = document.getElementById('btnSubmitFin');
-            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Catat Transaksi';
-            btnSubmit.classList.replace('btn-success', 'btn-primary');
-            document.getElementById('btnCancelFin').style.display = 'none';
+            const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Catat Transaksi';
+            btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancelFin').style.display = 'none';
         }
 
         function saveFinance() {
             let amt = document.getElementById('finAmount').value; let note = document.getElementById('finNote').value;
             if(!amt || !note) return alert('Isi Nominal & Keterangan');
-            
             let actionType = 'tambah';
-            let taskObj = {
-                id: editingFinId || Date.now().toString(),
-                title: `[KEUANGAN] ${note}`,
-                type: 'KEUANGAN',
-                status: document.getElementById('finType').value,
-                date: document.getElementById('finDate').value,
-                time: '', link: '', views: amt, note: ''
-            };
-
-            if (editingFinId) {
-                actionType = 'update';
-                const idx = tasks.findIndex(t => t.id === editingFinId);
-                if(idx !== -1) tasks[idx] = taskObj;
-            } else {
-                tasks.push(taskObj);
-            }
-
-            cancelEditFinance(); 
-            renderAll(); 
-            sendToCloud(actionType, taskObj);
+            let taskObj = { id: editingFinId || Date.now().toString(), title: `[KEUANGAN] ${note}`, type: 'KEUANGAN', status: document.getElementById('finType').value, date: document.getElementById('finDate').value, time: '', link: '', views: amt, note: '' };
+            if (editingFinId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingFinId); if(idx !== -1) tasks[idx] = taskObj; } 
+            else { tasks.push(taskObj); }
+            cancelEditFinance(); renderAll(); sendToCloud(actionType, taskObj);
         }
 
         function delFinance(id) {
-            if(confirm('Apakah Anda yakin ingin menghapus transaksi ini? Saldo akan otomatis disesuaikan.')) {
-                const tk = tasks.find(t => t.id === id);
-                tasks = tasks.filter(t => t.id !== id);
-                if (editingFinId === id) cancelEditFinance(); 
-                renderAll(); 
-                sendToCloud('hapus', tk);
+            if(confirm('Hapus transaksi ini? Saldo otomatis menyesuaikan.')) {
+                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
+                if (editingFinId === id) cancelEditFinance(); renderAll(); sendToCloud('hapus', tk);
+            }
+        }
+
+        // --- MODULE KONTAK TIM WA ---
+        function saveKontak() {
+            let n = document.getElementById('ktkName').value; let r = document.getElementById('ktkRole').value; let w = document.getElementById('ktkWA').value;
+            if(!n || !w) return alert('Nama dan Nomor WA wajib diisi!');
+            
+            // Format nomor telepon menjadi 62... (menghilangkan awalan 0)
+            let cleanWA = w.toString().replace(/\D/g,'');
+            if(cleanWA.startsWith('0')) cleanWA = '62' + cleanWA.substring(1);
+
+            let taskObj = {
+                id: Date.now().toString(), title: `[KONTAK] ${n}`, type: 'KONTAK', status: 'Aktif', 
+                date: new Date().toISOString().split('T')[0], time: '', link: cleanWA, views: 0, note: r
+            };
+            tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj);
+            document.getElementById('ktkName').value = ''; document.getElementById('ktkRole').value = ''; document.getElementById('ktkWA').value = '';
+        }
+
+        function renderKontak() {
+            const kList = tasks.filter(t => t.type === 'KONTAK');
+            const tb = document.getElementById('kontakBody'); tb.innerHTML = '';
+            
+            kList.forEach(k => {
+                let name = String(k.title).replace('[KONTAK] ', '');
+                let waLink = `https://wa.me/${k.link}`;
+                
+                tb.innerHTML += `
+                    <div class="contact-card">
+                        <div class="contact-avatar"><i class="fas fa-user"></i></div>
+                        <div class="contact-name">${name}</div>
+                        <div class="contact-role">${k.note || '-'}</div>
+                        <a href="${waLink}" target="_blank" class="btn btn-success" style="width:100%; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WA</a>
+                        <button class="btn btn-sm btn-outline admin-only" style="margin-top:10px; width:100%; border-color:var(--danger); color:var(--danger);" onclick="delKontak('${k.id}')"><i class="fas fa-trash"></i> Hapus</button>
+                    </div>
+                `;
+            });
+            if(kList.length === 0) tb.innerHTML = '<p style="color:#64748b; text-align:center; grid-column:1/-1;">Belum ada kontak tim yang dimasukkan.</p>';
+        }
+
+        function delKontak(id) {
+            if(confirm('Hapus kontak anggota ini?')) {
+                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
+                renderAll(); sendToCloud('hapus', tk);
             }
         }
 
@@ -646,7 +641,8 @@
         function drawCharts() {
             if (!tasks || tasks.length === 0) return;
             try {
-                const mTasks = tasks.filter(t => t.type !== 'KEUANGAN');
+                // Filter agar Keuangan dan Kontak tidak masuk hitungan pie chart
+                const mTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK');
                 let v = 0; let d = 0; let types = {}; 
                 mTasks.forEach(t => { 
                     v += parseInt(t.views) || 0; 
@@ -682,7 +678,6 @@
             } catch (err) { console.log("Menunggu sinkronisasi data grafik...", err); }
         }
 
-        // Cek login saat aplikasi dibuka
         window.onload = cekSesiLogin;
     </script>
 </body>
