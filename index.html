@@ -3,13 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bapakin Workspace V7.3 (Auto-Fix Analytics)</title>
+    <title>Bapakin Workspace V7.6 (Sistem Keamanan & Sosmed)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #f59e0b; --primary-hover: #d97706; --dark: #0f172a; --bg: #f8fafc; --text: #334155; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; }
+        :root { --primary: #f59e0b; --primary-hover: #d97706; --dark: #0f172a; --bg: #f8fafc; --text: #334155; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --info: #3b82f6; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { margin: 0; padding: 0; background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- PENGATURAN HAK AKSES (VIEWER) --- */
+        body.role-viewer .admin-only { display: none !important; }
+        body.role-viewer .dashboard-grid { grid-template-columns: 1fr !important; } /* Memperlebar tabel saat form disembunyikan */
+
+        /* --- LOGIN SCREEN --- */
+        #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px 30px; border-radius: 12px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .login-card i { font-size: 48px; color: var(--primary); margin-bottom: 15px; }
+        .login-card h2 { margin: 0 0 20px 0; color: var(--dark); }
+        .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;}
+        .login-card input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(245,158,11,0.1); }
+        .login-card button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .login-card button:hover { background: var(--primary-hover); }
+        .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none; }
+
+        /* --- MAIN APP --- */
+        #mainApp { display: none; width: 100%; height: 100%; }
 
         .sidebar { width: 260px; background-color: var(--dark); color: white; display: flex; flex-direction: column; transition: all 0.3s ease; z-index: 1000; }
         .sidebar-header { padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
@@ -20,6 +38,13 @@
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #94a3b8; text-decoration: none; transition: 0.2s; font-weight: 500; cursor: pointer; border-left: 4px solid transparent; }
         .nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; border-left-color: var(--primary); }
         .nav-link i { font-size: 18px; width: 24px; text-align: center; }
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid #1e293b; text-align: center; }
+        .sosmed-links { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; }
+        .sosmed-links a { color: #94a3b8; font-size: 20px; transition: 0.2s; }
+        .sosmed-links a:hover { color: var(--primary); transform: scale(1.1); }
+        .btn-logout { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-logout:hover { background: #ef4444; color: white; border-color: #ef4444; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         
@@ -82,166 +107,259 @@
             .sidebar.open { left: 0; }
             .menu-toggle { display: block; }
             .close-sidebar { display: block; }
-            .stats-wrapper { grid-template-columns: 1fr 1fr; }
+            .stats-wrapper { grid-template-columns: 1fr; }
             .chart-container { height: 200px; }
         }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>Bapakin HQ</h2>
-            <button class="close-sidebar" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+    <!-- LAYER LOGIN -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <i class="fas fa-lock"></i>
+            <h2>Login Bapakin</h2>
+            <div id="loginError" class="error-msg">Username atau Password salah!</div>
+            <input type="text" id="loginUser" placeholder="Username" onkeydown="if(event.key === 'Enter') doLogin()">
+            <input type="password" id="loginPass" placeholder="Password" onkeydown="if(event.key === 'Enter') doLogin()">
+            <button onclick="doLogin()">Masuk Workspace</button>
         </div>
-        <ul class="nav-links">
-            <li><a class="nav-link active" onclick="switchPage('page-kalender', 'Kalender Proyek & Konten', this)"><i class="fas fa-calendar-check"></i> Kalender Proyek</a></li>
-            <li><a class="nav-link" onclick="switchPage('page-analitik', 'Analitik & Performa', this)"><i class="fas fa-chart-pie"></i> Analitik & Views</a></li>
-            <li><a class="nav-link" onclick="switchPage('page-umkm', 'Database Kolaborasi UMKM', this)"><i class="fas fa-store"></i> Database UMKM</a></li>
-            <li><a class="nav-link" onclick="switchPage('page-charity', 'Laporan Finansial & Charity', this)"><i class="fas fa-wallet"></i> Charity & Finansial</a></li>
-            <li><a class="nav-link" onclick="switchPage('page-forum', 'Forum Tongkrongan Bapakin', this)"><i class="fab fa-whatsapp"></i> Forum Bapakin</a></li>
-        </ul>
-    </aside>
+    </div>
 
-    <main class="main-content">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <h1 class="page-title" id="mainPageTitle">Kalender Proyek & Konten</h1>
+    <!-- APLIKASI UTAMA -->
+    <div id="mainApp">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Bapakin HQ</h2>
+                <button class="close-sidebar" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
             </div>
-            <div id="syncStatus" class="sync-status success"><i class="fas fa-cloud"></i> Sync</div>
-        </header>
-
-        <div class="content-container" id="mainScrollArea">
+            <ul class="nav-links">
+                <li><a class="nav-link active" onclick="switchPage('page-kalender', 'Kalender Proyek & Konten', this)"><i class="fas fa-calendar-check"></i> Kalender Proyek</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-analitik', 'Analitik & Performa', this)"><i class="fas fa-chart-pie"></i> Analitik & Views</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-umkm', 'Database Kolaborasi UMKM', this)"><i class="fas fa-store"></i> Database UMKM</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-charity', 'Laporan Finansial & Charity', this)"><i class="fas fa-wallet"></i> Charity & Finansial</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-forum', 'Forum Tongkrongan Bapakin', this)"><i class="fab fa-whatsapp"></i> Forum Bapakin</a></li>
+            </ul>
             
-            <!-- HALAMAN 1: KALENDER -->
-            <div id="page-kalender" class="page-section active">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header"><i class="fas fa-edit"></i> <span id="formTitleText">Form Kegiatan</span></div>
-                        <div class="form-group">
-                            <label>Judul (Ketik atau Bicara)</label>
-                            <div class="input-icon-wrap">
-                                <input type="text" id="taskTitle" class="form-control" placeholder="Contoh: Rilis Produk / Syuting...">
-                                <button class="mic-btn" onclick="startDictation()" title="Klik untuk bicara"><i class="fas fa-microphone"></i></button>
+            <!-- SOSMED & LOGOUT -->
+            <div class="sidebar-footer">
+                <div class="sosmed-links">
+                    <a href="https://www.tiktok.com/@bapakin11?_r=1&_t=ZS-99SOHLuC05Q" target="_blank" title="TikTok BAPAKIN"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://www.instagram.com/bapakin_2026?igsi=YWg1Ym10cDRnOW03&utm_source=qr" target="_blank" title="Instagram BAPAKIN"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.facebook.com/share/1C9HABziMe/?mibextid=wwXIfr" target="_blank" title="Facebook Page BAPAKIN"><i class="fab fa-facebook"></i></a>
+                </div>
+                <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Keluar (Logout)</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title" id="mainPageTitle">Kalender Proyek & Konten</h1>
+                </div>
+                <div id="syncStatus" class="sync-status success"><i class="fas fa-cloud"></i> Sync</div>
+            </header>
+
+            <div class="content-container" id="mainScrollArea">
+                
+                <!-- HALAMAN 1: KALENDER -->
+                <div id="page-kalender" class="page-section active">
+                    <div class="dashboard-grid">
+                        
+                        <!-- FORM INPUT (Hanya Admin) -->
+                        <div class="card admin-only">
+                            <div class="card-header"><i class="fas fa-edit"></i> <span id="formTitleText">Form Kegiatan</span></div>
+                            <div class="form-group">
+                                <label>Judul (Ketik atau Bicara)</label>
+                                <div class="input-icon-wrap">
+                                    <input type="text" id="taskTitle" class="form-control" placeholder="Contoh: Rilis Produk / Syuting...">
+                                    <button class="mic-btn" onclick="startDictation()" title="Klik untuk bicara"><i class="fas fa-microphone"></i></button>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group"><label>Kategori</label>
+                                <select id="taskType" class="form-control">
+                                    <option value="VLOG">🎥 Vlog / Video</option><option value="PRODUK">📦 Rilis Produk</option>
+                                    <option value="FOTO">📷 Foto</option><option value="PROMOTE">🤝 Promote/UMKM</option>
+                                    <option value="EDUKASI">🧠 Edukasi</option><option value="LAINNYA">Lainnya...</option>
+                                </select></div>
+                                <div class="form-group"><label>Status</label><select id="taskStatus" class="form-control">
+                                    <option value="Rencana">📋 Rencana</option><option value="Produksi">⚙️ Proses</option><option value="Tayang">✅ Selesai/Tayang</option>
+                                </select></div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group"><label>Tanggal</label><input type="date" id="taskDate" class="form-control"></div>
+                                <div class="form-group"><label>Views (Jika Ada)</label><input type="number" id="taskViews" class="form-control" placeholder="0"></div>
+                            </div>
+                            <div class="form-group"><label>Link URL Konten</label><input type="text" id="taskLink" class="form-control" placeholder="Link Sosmed / Eksternal"></div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" id="btnSubmit" onclick="saveTask()"><i class="fas fa-save"></i> Simpan Data</button>
+                                <button class="btn btn-outline" id="btnCancel" onclick="cancelEdit()" style="display: none;">Batal</button>
                             </div>
                         </div>
-                        <div class="grid-2">
-                            <div class="form-group"><label>Kategori</label>
-                            <select id="taskType" class="form-control">
-                                <option value="VLOG">🎥 Vlog / Video</option><option value="PRODUK">📦 Rilis Produk</option>
-                                <option value="FOTO">📷 Foto</option><option value="PROMOTE">🤝 Promote/UMKM</option>
-                                <option value="EDUKASI">🧠 Edukasi</option><option value="LAINNYA">Lainnya...</option>
-                            </select></div>
-                            <div class="form-group"><label>Status</label><select id="taskStatus" class="form-control">
-                                <option value="Rencana">📋 Rencana</option><option value="Produksi">⚙️ Proses</option><option value="Tayang">✅ Selesai/Tayang</option>
-                            </select></div>
-                        </div>
-                        <div class="grid-2">
-                            <div class="form-group"><label>Tanggal</label><input type="date" id="taskDate" class="form-control"></div>
-                            <div class="form-group"><label>Views (Jika Ada)</label><input type="number" id="taskViews" class="form-control" placeholder="0"></div>
-                        </div>
-                        <div class="form-group"><label>Link URL</label><input type="text" id="taskLink" class="form-control" placeholder="Link Sosmed / Eksternal"></div>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary" id="btnSubmit" onclick="saveTask()"><i class="fas fa-save"></i> Simpan Data</button>
-                            <button class="btn btn-outline" id="btnCancel" onclick="cancelEdit()" style="display: none;">Batal</button>
-                        </div>
-                    </div>
 
-                    <div class="card">
-                        <div class="card-header"><i class="fas fa-list"></i> Jadwal & Progress</div>
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <div class="input-icon-wrap">
-                                <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: #94a3b8;"></i>
-                                <input type="text" id="searchInput" class="form-control" placeholder="Cari judul, kategori, atau status..." onkeyup="renderKalender()" style="padding-left: 35px; border-radius: 20px;">
+                        <!-- TABEL KALENDER -->
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-list"></i> Jadwal & Progress</div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <div class="input-icon-wrap">
+                                    <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: #94a3b8;"></i>
+                                    <input type="text" id="searchInput" class="form-control" placeholder="Cari judul, kategori, atau status..." onkeyup="renderKalender()" style="padding-left: 35px; border-radius: 20px;">
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="dataTable">
+                                    <thead><tr><th>Status</th><th>Judul</th><th>Kategori</th><th>Tgl</th><th class="admin-only">Aksi</th></tr></thead>
+                                    <tbody id="tableBody"><tr><td colspan="5" align="center">Memuat data...</td></tr></tbody>
+                                </table>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table id="dataTable">
-                                <thead><tr><th>Status</th><th>Judul</th><th>Kategori</th><th>Tgl</th><th>Aksi</th></tr></thead>
-                                <tbody id="tableBody"><tr><td colspan="5" align="center">Memuat data...</td></tr></tbody>
-                            </table>
+                    </div>
+                </div>
+
+                <!-- HALAMAN 2: ANALITIK -->
+                <div id="page-analitik" class="page-section">
+                    <div class="stats-wrapper" style="grid-template-columns: 1fr 1fr;">
+                        <div class="stat-card"><span class="stat-label">Total Views Keseluruhan</span><span class="stat-value" id="totViews">0</span></div>
+                        <div class="stat-card"><span class="stat-label">Konten / Proyek Selesai</span><span class="stat-value" id="totDone">0</span></div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="card"><div class="card-header">Distribusi Kategori Konten</div><div class="chart-container"><canvas id="pieChart"></canvas></div></div>
+                        <div class="card"><div class="card-header">Top 5 Performa (Views)</div><div class="chart-container"><canvas id="barChart"></canvas></div></div>
+                    </div>
+                </div>
+
+                <!-- HALAMAN 3: UMKM -->
+                <div id="page-umkm" class="page-section">
+                    <div class="dashboard-grid">
+                        <div class="card admin-only">
+                            <div class="card-header"><i class="fas fa-handshake"></i> Input Mitra UMKM Baru</div>
+                            <div class="form-group"><label>Nama Usaha / UMKM</label><input type="text" id="umkmName" class="form-control" placeholder="Contoh: Kedai Kopi Pak Muslih"></div>
+                            <div class="form-group"><label>Jenis Pekerjaan / Produk</label><input type="text" id="umkmType" class="form-control" placeholder="Contoh: Kuliner / F&B"></div>
+                            <div class="form-group"><label>Target Proyek / Kolaborasi (Tgl)</label><input type="date" id="umkmTarget" class="form-control"></div>
+                            <button class="btn btn-success" onclick="saveUmkm()"><i class="fas fa-plus"></i> Masukkan ke Jadwal Induk</button>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Daftar Kemitraan UMKM</div>
+                            <div class="table-responsive"><table id="umkmTable"><thead><tr><th>Target</th><th>Nama UMKM</th><th>Jenis Usaha</th></tr></thead><tbody id="umkmBody"></tbody></table></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- HALAMAN 2: ANALITIK -->
-            <div id="page-analitik" class="page-section">
-                <div class="stats-wrapper">
-                    <div class="stat-card"><span class="stat-label">Total Views Keseluruhan</span><span class="stat-value" id="totViews">0</span></div>
-                    <div class="stat-card"><span class="stat-label">Konten / Proyek Selesai</span><span class="stat-value" id="totDone">0</span></div>
-                </div>
-                <div class="dashboard-grid">
-                    <div class="card"><div class="card-header">Distribusi Kategori Konten</div><div class="chart-container"><canvas id="pieChart"></canvas></div></div>
-                    <div class="card"><div class="card-header">Top 5 Performa (Views)</div><div class="chart-container"><canvas id="barChart"></canvas></div></div>
-                </div>
-            </div>
-
-            <!-- HALAMAN 3: UMKM -->
-            <div id="page-umkm" class="page-section">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header"><i class="fas fa-handshake"></i> Input Mitra UMKM Baru</div>
-                        <div class="form-group"><label>Nama Usaha / UMKM</label><input type="text" id="umkmName" class="form-control" placeholder="Contoh: Kedai Kopi Pak Muslih"></div>
-                        <div class="form-group"><label>Jenis Pekerjaan / Produk</label><input type="text" id="umkmType" class="form-control" placeholder="Contoh: Kuliner / F&B"></div>
-                        <div class="form-group"><label>Target Proyek / Kolaborasi (Tgl)</label><input type="date" id="umkmTarget" class="form-control"></div>
-                        <button class="btn btn-success" onclick="saveUmkm()"><i class="fas fa-plus"></i> Masukkan ke Jadwal Induk</button>
+                <!-- HALAMAN 4: CHARITY & FINANSIAL -->
+                <div id="page-charity" class="page-section">
+                    <div class="stats-wrapper" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                        <div class="stat-card" style="border-left-color:var(--success)"><span class="stat-label">Total Pemasukan</span><span class="stat-value" id="totIn" style="color:var(--success); font-size:18px;">Rp 0</span></div>
+                        <div class="stat-card" style="border-left-color:var(--danger)"><span class="stat-label">Total Charity Keluar</span><span class="stat-value" id="totOut" style="color:var(--danger); font-size:18px;">Rp 0</span></div>
+                        <div class="stat-card" style="border-left-color:var(--info); background:#f0f9ff;"><span class="stat-label">Saldo Keuangan</span><span class="stat-value" id="totSaldo" style="color:var(--info); font-size:18px;">Rp 0</span></div>
                     </div>
-                    <div class="card">
-                        <div class="card-header">Daftar Kemitraan UMKM</div>
-                        <div class="table-responsive"><table id="umkmTable"><thead><tr><th>Target</th><th>Nama UMKM</th><th>Jenis Usaha</th></tr></thead><tbody id="umkmBody"></tbody></table></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- HALAMAN 4: CHARITY & FINANSIAL -->
-            <div id="page-charity" class="page-section">
-                <div class="stats-wrapper">
-                    <div class="stat-card" style="border-left-color:var(--success)"><span class="stat-label">Total Pemasukan Bisnis</span><span class="stat-value" id="totIn" style="color:var(--success)">Rp 0</span></div>
-                    <div class="stat-card" style="border-left-color:var(--danger)"><span class="stat-label">Total Penyaluran Charity</span><span class="stat-value" id="totOut" style="color:var(--danger)">Rp 0</span></div>
-                </div>
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header"><i class="fas fa-cash-register"></i> Input Transaksi</div>
-                        <div class="form-group"><label>Jenis Transaksi</label>
-                            <select id="finType" class="form-control">
-                                <option value="INCOME">🟢 Pemasukan (Omset / Bisnis)</option>
-                                <option value="EXPENSE">🔴 Pengeluaran (Khusus Charity/Sosial)</option>
-                            </select>
+                    <div class="dashboard-grid">
+                        <div class="card admin-only">
+                            <div class="card-header"><i class="fas fa-cash-register"></i> <span id="finFormTitle">Input Transaksi</span></div>
+                            <div class="form-group"><label>Jenis Transaksi</label>
+                                <select id="finType" class="form-control">
+                                    <option value="INCOME">🟢 Pemasukan (Omset / Bisnis)</option>
+                                    <option value="EXPENSE">🔴 Pengeluaran (Khusus Charity/Sosial)</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="finAmount" class="form-control" placeholder="Contoh: 1500000"></div>
+                            <div class="form-group"><label>Keterangan / Sumber</label><input type="text" id="finNote" class="form-control" placeholder="Contoh: Profit Penjualan / Panti Asuhan"></div>
+                            <div class="form-group"><label>Tanggal</label><input type="date" id="finDate" class="form-control"></div>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" id="btnSubmitFin" onclick="saveFinance()"><i class="fas fa-save"></i> Catat Transaksi</button>
+                                <button class="btn btn-outline" id="btnCancelFin" onclick="cancelEditFinance()" style="display: none;">Batal</button>
+                            </div>
                         </div>
-                        <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="finAmount" class="form-control" placeholder="Contoh: 1500000"></div>
-                        <div class="form-group"><label>Keterangan / Sumber</label><input type="text" id="finNote" class="form-control" placeholder="Contoh: Profit Penjualan / Panti Asuhan"></div>
-                        <div class="form-group"><label>Tanggal</label><input type="date" id="finDate" class="form-control"></div>
-                        <button class="btn btn-primary" onclick="saveFinance()"><i class="fas fa-save"></i> Catat Transaksi</button>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">Riwayat Transaksi Terakhir</div>
-                        <div class="table-responsive"><table id="finTable"><thead><tr><th>Tgl</th><th>Jenis</th><th>Keterangan</th><th>Nominal</th></tr></thead><tbody id="finBody"></tbody></table></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- HALAMAN 5: FORUM -->
-            <div id="page-forum" class="page-section">
-                <div class="card" style="max-width: 600px; margin: 0 auto; margin-top: 20px;">
-                    <div class="wa-box">
-                        <i class="fab fa-whatsapp"></i>
-                        <h2 style="margin:0 0 10px 0; color:#128C7E;">Grup Eksklusif Bapakin</h2>
-                        <p style="color:#475569; margin-bottom:20px;">Masuk ke ruang obrolan resmi untuk kordinasi tim dan komunitas.</p>
-                        <a href="https://chat.whatsapp.com/MasukanLinkGrupBapakDiSini" target="_blank" class="btn btn-success" style="font-size:16px; padding:12px;"><i class="fas fa-sign-in-alt"></i> Buka WhatsApp Group Sekarang</a>
+                        <div class="card">
+                            <div class="card-header">Riwayat Transaksi Terakhir</div>
+                            <div class="table-responsive">
+                                <table id="finTable">
+                                    <thead><tr><th>Tgl</th><th>Jenis</th><th>Keterangan</th><th>Nominal</th><th class="admin-only">Aksi</th></tr></thead>
+                                    <tbody id="finBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-        </div>
-    </main>
+                <!-- HALAMAN 5: FORUM -->
+                <div id="page-forum" class="page-section">
+                    <div class="card" style="max-width: 600px; margin: 0 auto; margin-top: 20px;">
+                        <div class="wa-box">
+                            <i class="fab fa-whatsapp"></i>
+                            <h2 style="margin:0 0 10px 0; color:#128C7E;">Grup Eksklusif Bapakin</h2>
+                            <p style="color:#475569; margin-bottom:20px;">Masuk ke ruang obrolan resmi untuk kordinasi tim dan komunitas.</p>
+                            <a href="https://chat.whatsapp.com/MasukanLinkGrupBapakDiSini" target="_blank" class="btn btn-success" style="font-size:16px; padding:12px;"><i class="fas fa-sign-in-alt"></i> Buka WhatsApp Group Sekarang</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
 
     <script>
+        // --- KONFIGURASI 2 AKUN (ROLE-BASED) ---
+        const DATA_AKUN = {
+            "admin": { pass: "admin123", role: "admin" },
+            "tim": { pass: "bapakin2026", role: "viewer" }
+        };
+
+        // --- SISTEM LOGIN & HAK AKSES ---
+        function cekSesiLogin() {
+            if(localStorage.getItem('bapakin_logged_in') === 'true') {
+                if(localStorage.getItem('bapakin_role') === 'viewer') {
+                    document.body.classList.add('role-viewer');
+                } else {
+                    document.body.classList.remove('role-viewer');
+                }
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                fetchFromCloud(); 
+            }
+        }
+
+        function doLogin() {
+            const u = document.getElementById('loginUser').value.toLowerCase();
+            const p = document.getElementById('loginPass').value;
+            const err = document.getElementById('loginError');
+            
+            if (DATA_AKUN[u] && DATA_AKUN[u].pass === p) {
+                localStorage.setItem('bapakin_logged_in', 'true');
+                localStorage.setItem('bapakin_role', DATA_AKUN[u].role);
+                
+                if(DATA_AKUN[u].role === 'viewer') {
+                    document.body.classList.add('role-viewer');
+                } else {
+                    document.body.classList.remove('role-viewer');
+                }
+                
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                fetchFromCloud(); 
+            } else {
+                err.style.display = 'block';
+            }
+        }
+
+        function doLogout() {
+            localStorage.removeItem('bapakin_logged_in');
+            localStorage.removeItem('bapakin_role');
+            document.body.classList.remove('role-viewer');
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        // --- CORE APP ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdDGM2CrhE1Jt0fJF2a-kGQq52-G0Nc6dKMPM18wd5v4B1cPNDDxmGHT2rAflpJG_p/exec';
         let tasks = []; 
         let pChart, bChart;
-        let editingId = null;
+        let editingId = null;       
+        let editingFinId = null;    
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
         
@@ -279,7 +397,6 @@
             renderKalender();
             renderUMKM();
             renderFinance();
-            // Otomatis update grafik jika user sedang berada di halaman Analitik
             if(document.getElementById('page-analitik').classList.contains('active')) {
                 drawCharts();
             }
@@ -311,7 +428,7 @@
                         <td style="white-space: normal;"><strong>${task.title}</strong> ${linkIco}<br><small style="color:#64748b"><i class="fas fa-eye"></i> ${task.views || 0} views</small></td>
                         <td><span class="badge bg-blue">${task.type}</span></td>
                         <td>${dateStr}</td>
-                        <td>
+                        <td class="admin-only">
                             <button class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px;" onclick="editTask('${task.id}')"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delTask('${task.id}')"><i class="fas fa-trash"></i></button>
                         </td>
@@ -324,7 +441,6 @@
         function editTask(id) {
             const t = tasks.find(x => x.id === id);
             if(!t) return;
-            
             editingId = id;
             document.getElementById('taskTitle').value = t.title;
             document.getElementById('taskType').value = t.type;
@@ -338,7 +454,6 @@
             btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
             btnSubmit.classList.replace('btn-primary', 'btn-success');
             document.getElementById('btnCancel').style.display = 'block';
-            
             document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -360,33 +475,24 @@
 
         function saveTask() {
             const title = document.getElementById('taskTitle').value; if(!title) return alert('Judul wajib diisi!');
-            
             let actionType = 'tambah';
             let taskObj = {
                 id: editingId || Date.now().toString(),
-                title: title,
-                type: document.getElementById('taskType').value,
-                status: document.getElementById('taskStatus').value,
-                date: document.getElementById('taskDate').value,
-                time: '',
-                link: document.getElementById('taskLink').value,
-                views: document.getElementById('taskViews').value || 0,
-                note: ''
+                title: title, type: document.getElementById('taskType').value, status: document.getElementById('taskStatus').value,
+                date: document.getElementById('taskDate').value, time: '', link: document.getElementById('taskLink').value, views: document.getElementById('taskViews').value || 0, note: ''
             };
 
             if (editingId) {
                 actionType = 'update';
                 const idx = tasks.findIndex(t => t.id === editingId);
                 if(idx !== -1) tasks[idx] = taskObj;
-            } else {
-                tasks.push(taskObj);
-            }
+            } else { tasks.push(taskObj); }
 
             cancelEdit(); renderAll(); sendToCloud(actionType, taskObj);
         }
 
         function delTask(id) {
-            if(confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+            if(confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
                 const tk = tasks.find(t => t.id === id);
                 tasks = tasks.filter(t => t.id !== id);
                 if (editingId === id) cancelEdit(); 
@@ -400,7 +506,6 @@
                 const SpeechRec = window.webkitSpeechRecognition || window.SpeechRecognition;
                 const rec = new SpeechRec();
                 rec.lang = 'id-ID'; rec.continuous = false; rec.interimResults = false;
-                
                 rec.onstart = () => { btn.classList.add('recording'); document.getElementById('taskTitle').placeholder = "Mendengarkan..."; };
                 rec.onresult = (e) => { document.getElementById('taskTitle').value = e.results[0][0].transcript; };
                 rec.onerror = (e) => { alert("Pastikan Anda mengizinkan akses mikrofon di pengaturan browser."); };
@@ -413,7 +518,6 @@
         function saveUmkm() {
             let n = document.getElementById('umkmName').value; let ty = document.getElementById('umkmType').value; let tg = document.getElementById('umkmTarget').value;
             if(!n) return alert('Nama UMKM wajib diisi');
-            
             let taskObj = {
                 id: Date.now().toString(), title: `[UMKM] ${n}`, type: 'PROMOTE', status: 'Rencana', date: tg, time: '', link: '', views: 0, note: ty
             };
@@ -430,17 +534,7 @@
             });
         }
 
-        // --- MODULE KEUANGAN & CHARITY ---
-        function saveFinance() {
-            let amt = document.getElementById('finAmount').value; let note = document.getElementById('finNote').value;
-            if(!amt || !note) return alert('Isi Nominal & Keterangan');
-            let taskObj = {
-                id: Date.now().toString(), title: `[KEUANGAN] ${note}`, type: 'KEUANGAN', status: document.getElementById('finType').value,
-                date: document.getElementById('finDate').value, time: '', link: '', views: amt, note: ''
-            };
-            tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj);
-            document.getElementById('finAmount').value = ''; document.getElementById('finNote').value = '';
-        }
+        // --- MODULE KEUANGAN ---
         function renderFinance() {
             const fList = tasks.filter(t => t.type === 'KEUANGAN');
             const tb = document.getElementById('finBody'); tb.innerHTML = '';
@@ -451,18 +545,106 @@
                 let amt = parseInt(f.views) || 0;
                 if(isInc) tIn += amt; else tOut += amt;
                 
-                tb.innerHTML += `<tr><td>${f.date ? new Date(f.date).toLocaleDateString('id-ID') : '-'}</td>
-                <td><span class="badge ${isInc ? 'bg-green' : 'bg-red'}" style="background:${isInc?'#dcfce3':'#fee2e2'};color:${isInc?'#166534':'#991b1b'}">${isInc ? 'Masuk' : 'Keluar'}</span></td>
-                <td>${String(f.title).replace('[KEUANGAN] ', '')}</td><td style="font-weight:bold">${formatRp(amt)}</td></tr>`;
+                tb.innerHTML += `
+                    <tr>
+                        <td>${f.date ? new Date(f.date).toLocaleDateString('id-ID') : '-'}</td>
+                        <td><span class="badge ${isInc ? 'bg-green' : 'bg-red'}" style="background:${isInc?'#dcfce3':'#fee2e2'};color:${isInc?'#166534':'#991b1b'}">${isInc ? 'Masuk' : 'Keluar'}</span></td>
+                        <td>${String(f.title).replace('[KEUANGAN] ', '')}</td>
+                        <td style="font-weight:bold">${formatRp(amt)}</td>
+                        <td class="admin-only">
+                            <button class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px;" onclick="editFinance('${f.id}')"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delFinance('${f.id}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
             });
+            
+            let saldoAkhir = tIn - tOut;
             document.getElementById('totIn').innerText = formatRp(tIn);
             document.getElementById('totOut').innerText = formatRp(tOut);
+            document.getElementById('totSaldo').innerText = formatRp(saldoAkhir);
+            
+            if(saldoAkhir < 0) {
+                document.getElementById('totSaldo').style.color = 'var(--danger)';
+            } else {
+                document.getElementById('totSaldo').style.color = 'var(--info)';
+            }
+
+            if(fList.length === 0) tb.innerHTML = '<tr><td colspan="5" align="center" style="color:#64748b; padding:20px;">Belum ada riwayat transaksi.</td></tr>';
         }
 
-        // --- MODULE ANALITIK & GRAFIK (AUTO-FIX) ---
-        function drawCharts() {
-            if (!tasks || tasks.length === 0) return; // Mencegah proses menggambar jika data masih kosong
+        function editFinance(id) {
+            const f = tasks.find(x => x.id === id);
+            if(!f) return;
+            
+            editingFinId = id;
+            document.getElementById('finType').value = f.status; 
+            document.getElementById('finAmount').value = parseInt(f.views) || 0;
+            document.getElementById('finNote').value = String(f.title).replace('[KEUANGAN] ', '');
+            document.getElementById('finDate').value = f.date || '';
+            
+            document.getElementById('finFormTitle').innerText = 'Update Transaksi';
+            const btnSubmit = document.getElementById('btnSubmitFin');
+            btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
+            btnSubmit.classList.replace('btn-primary', 'btn-success');
+            document.getElementById('btnCancelFin').style.display = 'block';
+            
+            document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
+        function cancelEditFinance() {
+            editingFinId = null;
+            document.getElementById('finType').value = 'INCOME';
+            document.getElementById('finAmount').value = '';
+            document.getElementById('finNote').value = '';
+            document.getElementById('finDate').value = '';
+            
+            document.getElementById('finFormTitle').innerText = 'Input Transaksi';
+            const btnSubmit = document.getElementById('btnSubmitFin');
+            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Catat Transaksi';
+            btnSubmit.classList.replace('btn-success', 'btn-primary');
+            document.getElementById('btnCancelFin').style.display = 'none';
+        }
+
+        function saveFinance() {
+            let amt = document.getElementById('finAmount').value; let note = document.getElementById('finNote').value;
+            if(!amt || !note) return alert('Isi Nominal & Keterangan');
+            
+            let actionType = 'tambah';
+            let taskObj = {
+                id: editingFinId || Date.now().toString(),
+                title: `[KEUANGAN] ${note}`,
+                type: 'KEUANGAN',
+                status: document.getElementById('finType').value,
+                date: document.getElementById('finDate').value,
+                time: '', link: '', views: amt, note: ''
+            };
+
+            if (editingFinId) {
+                actionType = 'update';
+                const idx = tasks.findIndex(t => t.id === editingFinId);
+                if(idx !== -1) tasks[idx] = taskObj;
+            } else {
+                tasks.push(taskObj);
+            }
+
+            cancelEditFinance(); 
+            renderAll(); 
+            sendToCloud(actionType, taskObj);
+        }
+
+        function delFinance(id) {
+            if(confirm('Apakah Anda yakin ingin menghapus transaksi ini? Saldo akan otomatis disesuaikan.')) {
+                const tk = tasks.find(t => t.id === id);
+                tasks = tasks.filter(t => t.id !== id);
+                if (editingFinId === id) cancelEditFinance(); 
+                renderAll(); 
+                sendToCloud('hapus', tk);
+            }
+        }
+
+        // --- MODULE ANALITIK & GRAFIK ---
+        function drawCharts() {
+            if (!tasks || tasks.length === 0) return;
             try {
                 const mTasks = tasks.filter(t => t.type !== 'KEUANGAN');
                 let v = 0; let d = 0; let types = {}; 
@@ -490,7 +672,6 @@
                     type: 'bar',
                     data: { 
                         labels: top.map(t => {
-                            // Memaksa judul menjadi teks agar sistem tidak tersedak jika ada judul berupa angka saja
                             let safeTitle = String(t.title || 'Tanpa Judul');
                             return safeTitle.length > 12 ? safeTitle.substring(0,12) + '...' : safeTitle;
                         }), 
@@ -498,13 +679,11 @@
                     },
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
                 });
-            } catch (err) {
-                console.log("Menunggu sinkronisasi data grafik...", err);
-            }
+            } catch (err) { console.log("Menunggu sinkronisasi data grafik...", err); }
         }
 
-        // Jalankan saat aplikasi dibuka
-        window.onload = fetchFromCloud;
+        // Cek login saat aplikasi dibuka
+        window.onload = cekSesiLogin;
     </script>
 </body>
 </html>
