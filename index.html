@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bapakin Workspace V7.7 (Mobile Fit & Direktori WA)</title>
+    <title>Bapakin Workspace V8.3 (Super Admin & R&D Popup)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #f59e0b; --primary-hover: #d97706; --dark: #0f172a; --bg: #f8fafc; --text: #334155; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --info: #3b82f6; }
+        :root { --primary: #f59e0b; --primary-hover: #d97706; --dark: #0f172a; --bg: #f8fafc; --text: #334155; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --info: #3b82f6; --gold: #ca8a04; }
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { margin: 0; padding: 0; background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- PENGATURAN HAK AKSES (VIEWER) --- */
-        body.role-viewer .admin-only { display: none !important; }
+        /* --- PENGATURAN HAK AKSES BERTINGKAT --- */
+        /* Viewer: Sembunyikan Admin & Super Admin */
+        body.role-viewer .admin-only, body.role-viewer .super-admin-only { display: none !important; }
         body.role-viewer .dashboard-grid { grid-template-columns: 1fr !important; }
+        
+        /* Admin Biasa: Sembunyikan Super Admin (R&D) */
+        body.role-admin .super-admin-only { display: none !important; }
 
         /* --- LOGIN SCREEN --- */
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -66,10 +70,10 @@
         .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
         .card-header { margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: 600; color: var(--dark); display: flex; justify-content: space-between; align-items: center;}
         
-        .stats-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stats-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--primary); }
         .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px; }
-        .stat-value { font-size: 22px; font-weight: bold; color: var(--dark); }
+        .stat-value { font-size: 20px; font-weight: bold; color: var(--dark); }
 
         .form-group { margin-bottom: 12px; position: relative; }
         .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
@@ -95,21 +99,46 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
         th { background: #f8fafc; color: #475569; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        .bg-gray { background: #f1f5f9; color: #475569; } .bg-yellow { background: #fef3c7; color: #d97706; } .bg-green { background: #dcfce3; color: #166534; } .bg-blue { background: #dbeafe; color: #1e40af; }
+        .bg-gray { background: #f1f5f9; color: #475569; } .bg-yellow { background: #fef3c7; color: #d97706; } .bg-green { background: #dcfce3; color: #166534; } .bg-blue { background: #dbeafe; color: #1e40af; } .bg-gold { background: #fef08a; color: #a16207; }
 
         .chart-container { position: relative; height: 250px; width: 100%; margin-top: 10px; }
         
-        /* CARD KONTAK TIM */
         .contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
         .contact-card { background: #f8fafc; border: 1px solid var(--border); padding: 15px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .contact-avatar { width: 50px; height: 50px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #64748b; margin-bottom: 10px; }
-        .contact-name { font-weight: bold; color: var(--dark); font-size: 14px; margin-bottom: 3px; }
-        .contact-role { font-size: 11px; color: #64748b; margin-bottom: 12px; background: white; padding: 2px 8px; border-radius: 20px; border: 1px solid #cbd5e1;}
+        
+        /* CHAT ROOM STYLING */
+        .chat-container { display: flex; flex-direction: column; height: 500px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #f8fafc; }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 13px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .chat-bubble.other { background: white; border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 0; }
+        .chat-bubble.mine { background: #dbeafe; border: 1px solid #bfdbfe; align-self: flex-end; border-bottom-right-radius: 0; }
+        .chat-sender { font-size: 10px; font-weight: bold; color: var(--primary); margin-bottom: 3px; display: block; }
+        .chat-date { font-size: 9px; color: #94a3b8; display: block; margin-top: 5px; text-align: right; }
+        .chat-input-area { padding: 15px; background: white; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .btn-del-chat { position: absolute; right: -25px; top: 5px; background: none; border: none; color: var(--danger); cursor: pointer; display: none; }
+        .admin-only .btn-del-chat { display: block; }
 
-        /* --- PENYEMPURNAAN MOBILE (RESPONSIF PENUH) --- */
-        @media (max-width: 992px) { 
-            .dashboard-grid { grid-template-columns: 1fr; } 
-        }
+        /* BANNER COMING SOON */
+        .coming-soon-banner { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        .coming-soon-banner h3 { margin: 0 0 10px 0; display: flex; align-items: center; gap: 10px; }
+        .prod-cards-container { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; }
+        .prod-card-mini { background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; min-width: 250px; display: flex; gap: 15px; align-items: center; border: 1px solid rgba(255,255,255,0.3); cursor: pointer; transition: 0.2s; }
+        .prod-card-mini:hover { background: rgba(255,255,255,0.35); transform: scale(1.02); }
+        .prod-card-mini img { width: 55px; height: 55px; border-radius: 6px; object-fit: cover; background: #fff; }
+        .prod-info h4 { margin: 0 0 4px 0; font-size: 14px; }
+        .prod-info p { margin: 0; font-size: 11px; opacity: 0.9; }
+
+        /* MODAL POPUP R&D ZOOM FOTO */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 400px; width: 90%; position: relative; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); animation: fadeIn 0.3s ease; }
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: var(--danger); background: none; border: none; }
+        .modal-img { width: 100%; max-height: 45vh; border-radius: 8px; margin-bottom: 15px; object-fit: contain; background: #f8fafc; border: 1px solid var(--border); }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: var(--dark); }
+        .modal-info { background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: left; border: 1px dashed #cbd5e1; }
+        .modal-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+
+        @media (max-width: 992px) { .dashboard-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: -260px; height: 100%; }
             .sidebar.open { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
@@ -117,18 +146,11 @@
             .close-sidebar { display: block; }
             .content-container { padding: 10px; }
             .card { padding: 15px; }
-            
-            /* Form tersusun ke bawah di HP */
             .grid-2 { grid-template-columns: 1fr !important; gap: 0; } 
-            
-            /* Stats tersusun rapi di HP */
             .stats-wrapper { grid-template-columns: 1fr !important; }
-            
-            /* Grafik dikecilkan agar muat */
             .chart-container { height: 200px; }
-            
-            /* Tabel geser (swipeable) lebih rapi */
             th, td { padding: 10px 8px; font-size: 11px; }
+            .chat-container { height: 400px; }
         }
     </style>
 </head>
@@ -146,6 +168,31 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP R&D ZOOM -->
+    <div id="prodModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeProdModal()"><i class="fas fa-times"></i></button>
+            <h3 id="mProdTitle" class="modal-title">Nama Produk</h3>
+            <img id="mProdImg" class="modal-img" src="" alt="Detail Produk">
+            
+            <div class="modal-info">
+                <div class="modal-info-row">
+                    <span style="color:#64748b;">Target Harga Jual:</span>
+                    <span id="mProdJual" style="font-weight:bold; color:var(--dark); font-size:16px;">Rp 0</span>
+                </div>
+                <div class="modal-info-row" style="margin-top:10px; padding-top:10px; border-top:1px solid #cbd5e1;">
+                    <span style="color:var(--success); font-weight:bold;"><i class="fas fa-chart-line"></i> Potensi Keuntungan:</span>
+                    <span id="mProdProfit" style="font-weight:bold; color:var(--success); font-size:18px;">Rp 0</span>
+                </div>
+                <div style="font-size:10px; color:#94a3b8; text-align:center; margin-top:10px;">
+                    *Nilai modal/HPP bersifat rahasia.
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" style="margin-top:15px; width:100%;" onclick="closeProdModal()">Tutup Jendela</button>
+        </div>
+    </div>
+
     <!-- APLIKASI UTAMA -->
     <div id="mainApp">
         <aside class="sidebar" id="sidebar">
@@ -158,10 +205,14 @@
                 <li><a class="nav-link" onclick="switchPage('page-analitik', 'Analitik & Performa', this)"><i class="fas fa-chart-pie"></i> Analitik & Views</a></li>
                 <li><a class="nav-link" onclick="switchPage('page-umkm', 'Database Kolaborasi UMKM', this)"><i class="fas fa-store"></i> Database UMKM</a></li>
                 <li><a class="nav-link" onclick="switchPage('page-charity', 'Laporan Finansial & Charity', this)"><i class="fas fa-wallet"></i> Charity & Finansial</a></li>
-                <li><a class="nav-link" onclick="switchPage('page-kontak', 'Direktori Kontak Tim', this)"><i class="fas fa-address-book"></i> Kontak Tim WA</a></li>
+                
+                <!-- MENU R&D HANYA UNTUK SUPER ADMIN -->
+                <li class="super-admin-only"><a class="nav-link" onclick="switchPage('page-produksi', 'R&D & Produksi Barang', this)"><i class="fas fa-box-open"></i> R&D Produksi (Owner)</a></li>
+                
+                <li><a class="nav-link" onclick="switchPage('page-kontak', 'Direktori Kontak Tim WA', this)"><i class="fas fa-address-book"></i> Kontak Tim WA</a></li>
+                <li><a class="nav-link" onclick="switchPage('page-forum', 'Papan Diskusi Internal', this)"><i class="fas fa-comments"></i> Forum Diskusi Tim</a></li>
             </ul>
             
-            <!-- SOSMED & LOGOUT -->
             <div class="sidebar-footer">
                 <div class="sosmed-links">
                     <a href="https://www.tiktok.com/@bapakin11?_r=1&_t=ZS-99SOHLuC05Q" target="_blank" title="TikTok BAPAKIN"><i class="fab fa-tiktok"></i></a>
@@ -183,10 +234,15 @@
 
             <div class="content-container" id="mainScrollArea">
                 
+                <!-- BANNER R&D (Muncul jika ada produk dipublish) -->
+                <div id="comingSoonBanner" class="coming-soon-banner">
+                    <h3><i class="fas fa-bullhorn"></i> INFO BAPAKIN: Produk Segera Hadir!</h3>
+                    <div class="prod-cards-container" id="comingSoonBody"></div>
+                </div>
+
                 <!-- HALAMAN 1: KALENDER -->
                 <div id="page-kalender" class="page-section active">
                     <div class="dashboard-grid">
-                        <!-- FORM INPUT (Hanya Admin) -->
                         <div class="card admin-only">
                             <div class="card-header"><i class="fas fa-edit"></i> <span id="formTitleText">Form Kegiatan</span></div>
                             <div class="form-group">
@@ -218,9 +274,8 @@
                             </div>
                         </div>
 
-                        <!-- TABEL KALENDER -->
                         <div class="card">
-                            <div class="card-header"><i class="fas fa-list"></i> Jadwal & Progress</div>
+                            <div class="card-header"><div><i class="fas fa-list"></i> Jadwal & Progress</div></div>
                             <div class="form-group" style="margin-bottom: 15px;">
                                 <div class="input-icon-wrap">
                                     <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: #94a3b8;"></i>
@@ -239,9 +294,20 @@
 
                 <!-- HALAMAN 2: ANALITIK -->
                 <div id="page-analitik" class="page-section">
-                    <div class="stats-wrapper" style="grid-template-columns: 1fr 1fr;">
-                        <div class="stat-card"><span class="stat-label">Total Views Keseluruhan</span><span class="stat-value" id="totViews">0</span></div>
-                        <div class="stat-card"><span class="stat-label">Konten / Proyek Selesai</span><span class="stat-value" id="totDone">0</span></div>
+                    <div class="stats-wrapper" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+                        <div class="stat-card"><span class="stat-label">Total Proyek</span><span class="stat-value" id="totProject">0</span></div>
+                        <div class="stat-card" style="border-left-color: var(--success);"><span class="stat-label">Selesai / Tayang</span><span class="stat-value" id="totDone" style="color: var(--success);">0</span></div>
+                        <div class="stat-card" style="border-left-color: var(--info);"><span class="stat-label">Progres (%)</span><span class="stat-value" id="totProgress" style="color: var(--info);">0%</span></div>
+                        <div class="stat-card" style="border-left-color: #8b5cf6;"><span class="stat-label">Total Views</span><span class="stat-value" id="totViews" style="color: #8b5cf6;">0</span></div>
+                    </div>
+                    <div class="card" style="margin-bottom: 20px; padding: 15px 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: bold; color: var(--dark);">
+                            <span>Tingkat Penyelesaian Proyek Keseluruhan</span>
+                            <span id="progressBarText">0%</span>
+                        </div>
+                        <div style="width: 100%; background: #e2e8f0; border-radius: 10px; height: 12px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                            <div id="progressBarFill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 1s ease-in-out;"></div>
+                        </div>
                     </div>
                     <div class="dashboard-grid">
                         <div class="card"><div class="card-header">Distribusi Kategori Konten</div><div class="chart-container"><canvas id="pieChart"></canvas></div></div>
@@ -285,7 +351,6 @@
                             <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="finAmount" class="form-control" placeholder="Contoh: 1500000"></div>
                             <div class="form-group"><label>Keterangan / Sumber</label><input type="text" id="finNote" class="form-control" placeholder="Contoh: Profit Penjualan / Panti Asuhan"></div>
                             <div class="form-group"><label>Tanggal</label><input type="date" id="finDate" class="form-control"></div>
-                            
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn btn-primary" id="btnSubmitFin" onclick="saveFinance()"><i class="fas fa-save"></i> Catat Transaksi</button>
                                 <button class="btn btn-outline" id="btnCancelFin" onclick="cancelEditFinance()" style="display: none;">Batal</button>
@@ -303,7 +368,75 @@
                     </div>
                 </div>
 
-                <!-- HALAMAN 5: DIREKTORI KONTAK TIM WA -->
+                <!-- HALAMAN 5: R&D PRODUKSI (HANYA SUPER ADMIN) -->
+                <div id="page-produksi" class="page-section">
+                    <div class="dashboard-grid super-admin-only">
+                        
+                        <div class="card">
+                            <div class="card-header"><i class="fas fa-box-open"></i> <span id="prodFormTitle">Kalkulator R&D Produk Baru</span></div>
+                            
+                            <div class="form-group">
+                                <label>Nama Produk / Rencana Rilis</label>
+                                <input type="text" id="prodName" class="form-control" placeholder="Contoh: Jaket Bapakin Edisi Spesial">
+                            </div>
+                            
+                            <div class="form-group" style="background:#f8fafc; padding:12px; border:1px solid var(--border); border-radius:8px;">
+                                <label style="color:var(--primary);"><i class="fas fa-upload"></i> Upload Foto Desain (Dari HP/Laptop)</label>
+                                <input type="file" id="prodImgFile" accept="image/*" class="form-control" onchange="compressImage(event)" style="padding: 7px; background:white;">
+                                <div id="imgPreviewContainer" style="display:none; margin-top:10px; text-align:center;">
+                                    <img id="imgPreview" style="max-width:120px; border-radius:8px; border:1px solid #ccc; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                                    <br><small style="font-size:10px; color:var(--success);">Gambar siap disimpan!</small>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align:center; font-size:11px; color:#94a3b8; margin: 10px 0;">--- ATAU ---</div>
+                            <div class="form-group"><label>Masukkan URL Foto Bebas (Opsional)</label><input type="text" id="prodImgLink" class="form-control" placeholder="Link gambar dari web..."></div>
+                            
+                            <div class="grid-2">
+                                <div class="form-group"><label>Total Modal Seluruhnya (Rp)</label><input type="number" id="prodModal" class="form-control" placeholder="Contoh: 5000000" oninput="calcHPP()"></div>
+                                <div class="form-group"><label>Rencana Produksi (Qty)</label><input type="number" id="prodQty" class="form-control" placeholder="Contoh: 100" oninput="calcHPP()" value="1"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Harga Jual Satuan (Rp) <small style="color:var(--primary); font-weight:normal;">*Bisa diedit manual</small></label>
+                                <input type="number" id="prodJual" class="form-control" placeholder="Contoh: 150000" oninput="calcProfitManual()">
+                            </div>
+                            
+                            <div style="background:#f1f5f9; padding:15px; border-radius:8px; margin-bottom:15px; border:1px dashed #cbd5e1;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="font-size:12px; color:#64748b; font-weight:bold;">HPP Satuan (Harga Pokok):</span>
+                                    <span id="labelHPP" style="font-weight:bold; color:var(--danger);">Rp 0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="font-size:12px; color:#64748b; font-weight:bold;">Total Proyeksi Pendapatan:</span>
+                                    <span id="labelTotalJual" style="font-weight:bold; color:var(--info);">Rp 0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #cbd5e1;">
+                                    <span style="font-size:12px; color:var(--success); font-weight:bold;">ESTIMASI PROFIT BERSIH:</span>
+                                    <span id="labelProfit" style="font-weight:bold; color:var(--success); font-size:16px;">Rp 0</span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; flex-wrap:wrap;">
+                                <button class="btn btn-outline" id="btnDraftProd" onclick="saveProduksi('Draft')" style="flex:1;"><i class="fas fa-save"></i> Simpan Draft</button>
+                                <button class="btn btn-primary" id="btnPubProd" onclick="saveProduksi('Published')" style="flex:1;"><i class="fas fa-bullhorn"></i> Publish ke Tim</button>
+                                <button class="btn btn-danger" id="btnCancelProd" onclick="cancelEditProduksi()" style="display:none; width:100%;">Batal Edit</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">Daftar Rencana Produksi</div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Status</th><th>Produk & Profit</th><th>Finansial (Satuan)</th><th>Aksi</th></tr></thead>
+                                    <tbody id="prodBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HALAMAN 6: KONTAK -->
                 <div id="page-kontak" class="page-section">
                     <div class="dashboard-grid">
                         <div class="card admin-only">
@@ -315,8 +448,23 @@
                         </div>
                         <div class="card">
                             <div class="card-header"><i class="fas fa-address-book"></i> Direktori Tim Bapakin</div>
-                            <div class="contact-grid" id="kontakBody">
-                                <!-- Data Kontak Muncul di Sini -->
+                            <div class="contact-grid" id="kontakBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HALAMAN 7: FORUM / CHAT INTERNAL -->
+                <div id="page-forum" class="page-section">
+                    <div class="card" style="max-width: 700px; margin: 0 auto;">
+                        <div class="card-header" style="justify-content: flex-start; gap: 10px;">
+                            <i class="fas fa-comments" style="color:var(--primary);"></i> Ruang Diskusi Internal Bapakin
+                            <button class="btn btn-sm btn-outline" style="margin-left:auto;" onclick="fetchFromCloud()"><i class="fas fa-sync"></i> Segarkan Chat</button>
+                        </div>
+                        <div class="chat-container">
+                            <div class="chat-box" id="chatBody"></div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" class="form-control" placeholder="Ketik pesan untuk tim..." onkeydown="if(event.key === 'Enter') saveChat()">
+                                <button class="btn btn-primary" style="width:auto; padding:0 20px;" onclick="saveChat()"><i class="fas fa-paper-plane"></i></button>
                             </div>
                         </div>
                     </div>
@@ -327,20 +475,16 @@
     </div>
 
     <script>
-        // --- KONFIGURASI AKUN ---
+        // --- KONFIGURASI 3 TINGKAT AKUN ---
         const DATA_AKUN = {
-            "admin": { pass: "admin123", role: "admin" },
-            "tim": { pass: "bapakin2026", role: "viewer" }
+            "super": { pass: "super123", role: "super_admin", name: "Super Admin (Owner)" },
+            "admin": { pass: "admin123", role: "admin", name: "Admin Utama" },
+            "tim": { pass: "bapakin2026", role: "viewer", name: "Anggota Tim" }
         };
 
-        // --- SISTEM LOGIN & HAK AKSES ---
         function cekSesiLogin() {
             if(localStorage.getItem('bapakin_logged_in') === 'true') {
-                if(localStorage.getItem('bapakin_role') === 'viewer') {
-                    document.body.classList.add('role-viewer');
-                } else {
-                    document.body.classList.remove('role-viewer');
-                }
+                applyRolePermissions(localStorage.getItem('bapakin_role'));
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'flex';
                 fetchFromCloud(); 
@@ -355,28 +499,34 @@
             if (DATA_AKUN[u] && DATA_AKUN[u].pass === p) {
                 localStorage.setItem('bapakin_logged_in', 'true');
                 localStorage.setItem('bapakin_role', DATA_AKUN[u].role);
-                if(DATA_AKUN[u].role === 'viewer') { document.body.classList.add('role-viewer'); } 
-                else { document.body.classList.remove('role-viewer'); }
+                localStorage.setItem('bapakin_name', DATA_AKUN[u].name); 
+                applyRolePermissions(DATA_AKUN[u].role);
+                
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'flex';
                 fetchFromCloud(); 
             } else { err.style.display = 'block'; }
         }
 
-        function doLogout() {
-            localStorage.removeItem('bapakin_logged_in');
-            localStorage.removeItem('bapakin_role');
-            document.body.classList.remove('role-viewer');
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
+        function applyRolePermissions(role) {
+            // Hapus semua class role agar tidak bentrok
+            document.body.classList.remove('role-viewer', 'role-admin', 'role-super');
+            
+            if(role === 'viewer') document.body.classList.add('role-viewer');
+            else if(role === 'admin') document.body.classList.add('role-admin');
+            else if(role === 'super_admin') document.body.classList.add('role-super');
         }
 
-        // --- CORE APP ---
+        function doLogout() {
+            localStorage.clear(); 
+            document.body.classList.remove('role-viewer', 'role-admin', 'role-super');
+            document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
+            document.getElementById('mainApp').style.display = 'none'; document.getElementById('loginScreen').style.display = 'flex';
+        }
+
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdDGM2CrhE1Jt0fJF2a-kGQq52-G0Nc6dKMPM18wd5v4B1cPNDDxmGHT2rAflpJG_p/exec';
         let tasks = []; let pChart, bChart;
-        let editingId = null; let editingFinId = null;    
+        let editingId = null; let editingFinId = null; let editingProdId = null;
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
         
@@ -387,7 +537,10 @@
             btn.classList.add('active');
             document.getElementById('mainPageTitle').innerText = title;
             if(window.innerWidth <= 768) toggleSidebar();
+            
             if(pageId === 'page-analitik') drawCharts();
+            if(pageId === 'page-forum') scrollChatToBottom();
+            if(pageId === 'page-kalender' && !sessionStorage.getItem('bapakin_asked_sync')) { setTimeout(() => { askSyncCalendar(); }, 800); }
         }
 
         const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0);
@@ -395,9 +548,7 @@
         async function fetchFromCloud() {
             document.getElementById('syncStatus').className = 'sync-status syncing';
             try {
-                const response = await fetch(SCRIPT_URL);
-                tasks = await response.json();
-                renderAll();
+                const response = await fetch(SCRIPT_URL); tasks = await response.json(); renderAll();
                 document.getElementById('syncStatus').className = 'sync-status success';
             } catch (error) { console.error(error); }
         }
@@ -406,276 +557,284 @@
             document.getElementById('syncStatus').className = 'sync-status syncing';
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: actionType, task: taskObj }) });
-                document.getElementById('syncStatus').className = 'sync-status success';
+                document.getElementById('syncStatus').className = 'sync-status success'; fetchFromCloud(); 
             } catch (error) { console.error(error); }
         }
 
         function renderAll() {
-            renderKalender();
-            renderUMKM();
-            renderFinance();
-            renderKontak();
-            if(document.getElementById('page-analitik').classList.contains('active')) { drawCharts(); }
+            renderKalender(); renderUMKM(); renderFinance(); renderKontak(); renderChat(); renderProduksi();
+            if(document.getElementById('page-analitik').classList.contains('active')) drawCharts();
         }
 
         // --- MODULE KALENDER ---
+        function askSyncCalendar() {
+            if(confirm("Apakah Anda ingin menyinkronkan jadwal Bapakin ke kalender handphone Anda sekarang?")) { downloadICS(); }
+            sessionStorage.setItem('bapakin_asked_sync', 'true'); 
+        }
+
+        function downloadICS() {
+            let icsMSG = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Bapakin//ID\n";
+            let mainTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK' && t.type !== 'CHAT' && t.type !== 'PRODUKSI' && t.date);
+            if(mainTasks.length === 0) return alert("Belum ada jadwal bertanggal.");
+            mainTasks.forEach(t => {
+                let d = new Date(t.date); let nextD = new Date(d); nextD.setDate(d.getDate() + 1);
+                let formatD = (date) => date.toISOString().split('T')[0].replace(/-/g, '');
+                icsMSG += "BEGIN:VEVENT\n" + `DTSTART;VALUE=DATE:${formatD(d)}\n` + `DTEND;VALUE=DATE:${formatD(nextD)}\n` + `SUMMARY:[Bapakin] ${t.title}\n` + `DESCRIPTION:Kategori: ${t.type} - Status: ${t.status}\n` + "END:VEVENT\n";
+            });
+            icsMSG += "END:VCALENDAR";
+            let blob = new Blob([icsMSG], {type: 'text/calendar'}); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = 'Jadwal_Bapakin.ics'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            alert("File berhasil diunduh. Silakan buka file tersebut untuk menyimpannya.");
+        }
+
         function renderKalender() {
             const searchKw = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-            
-            // Filter agar Data Keuangan & Kontak tidak masuk ke kalender konten
-            let mainTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK');
-            
-            if (searchKw) {
-                mainTasks = mainTasks.filter(t => 
-                    (t.title && String(t.title).toLowerCase().includes(searchKw)) || 
-                    (t.type && String(t.type).toLowerCase().includes(searchKw)) ||
-                    (t.status && String(t.status).toLowerCase().includes(searchKw))
-                );
-            }
-
+            let mainTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK' && t.type !== 'CHAT' && t.type !== 'PRODUKSI');
+            if (searchKw) { mainTasks = mainTasks.filter(t => (t.title && String(t.title).toLowerCase().includes(searchKw)) || (t.type && String(t.type).toLowerCase().includes(searchKw)) || (t.status && String(t.status).toLowerCase().includes(searchKw))); }
             const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
-            
             mainTasks.reverse().forEach(task => {
-                let bClass = task.status === 'Produksi' ? 'bg-yellow' : (task.status === 'Tayang' ? 'bg-green' : 'bg-gray');
-                let dateStr = task.date ? new Date(task.date).toLocaleDateString('id-ID') : '-';
+                let bClass = task.status === 'Produksi' ? 'bg-yellow' : (task.status === 'Tayang' ? 'bg-green' : 'bg-gray'); let dateStr = task.date ? new Date(task.date).toLocaleDateString('id-ID') : '-';
                 let linkIco = task.link ? `<a href="${task.link}" target="_blank" style="color:var(--primary); margin-left:6px; font-size:11px;" title="Buka Konten"><i class="fas fa-external-link-alt"></i></a>` : '';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="badge ${bClass}">${task.status}</span></td>
-                        <td style="white-space: normal;"><strong>${task.title}</strong> ${linkIco}<br><small style="color:#64748b"><i class="fas fa-eye"></i> ${task.views || 0} views</small></td>
-                        <td><span class="badge bg-blue">${task.type}</span></td>
-                        <td>${dateStr}</td>
-                        <td class="admin-only">
-                            <button class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px;" onclick="editTask('${task.id}')"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delTask('${task.id}')"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>`;
+                let calLink = '';
+                if(task.date) {
+                    let d = new Date(task.date); let nextD = new Date(d); nextD.setDate(d.getDate() + 1); let formatD = (date) => date.toISOString().split('T')[0].replace(/-/g, '');
+                    let gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(task.title)}&dates=${formatD(d)}/${formatD(nextD)}&details=Sistem%20Bapakin`;
+                    calLink = `<a href="${gCalUrl}" target="_blank" class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px; color:var(--info); border-color:var(--info);" title="Simpan ke Google Calendar Pribadi"><i class="fas fa-calendar-plus"></i></a>`;
+                }
+                tbody.innerHTML += `<tr><td><span class="badge ${bClass}">${task.status}</span></td><td style="white-space: normal;"><strong>${task.title}</strong> ${linkIco}<br><small style="color:#64748b"><i class="fas fa-eye"></i> ${task.views || 0} views</small></td><td><span class="badge bg-blue">${task.type}</span></td><td>${dateStr}</td><td style="display:flex; gap:5px;">${calLink}<div class="admin-only" style="display:inline-flex; gap:5px;"><button class="btn btn-sm btn-outline" style="padding:4px 8px;" onclick="editTask('${task.id}')"><i class="fas fa-pen"></i></button><button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delTask('${task.id}')"><i class="fas fa-trash"></i></button></div></td></tr>`;
             });
-
             if(mainTasks.length === 0) tbody.innerHTML = '<tr><td colspan="5" align="center" style="color:#64748b; padding:20px;">Data tidak ditemukan.</td></tr>';
         }
 
         function editTask(id) {
-            const t = tasks.find(x => x.id === id); if(!t) return;
-            editingId = id;
-            document.getElementById('taskTitle').value = t.title; document.getElementById('taskType').value = t.type;
-            document.getElementById('taskStatus').value = t.status; document.getElementById('taskDate').value = t.date || '';
-            document.getElementById('taskViews').value = t.views || ''; document.getElementById('taskLink').value = t.link || '';
-            
-            document.getElementById('formTitleText').innerText = 'Update Jadwal / Tautan';
-            const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
-            btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancel').style.display = 'block';
-            document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+            const t = tasks.find(x => x.id === id); if(!t) return; editingId = id; document.getElementById('taskTitle').value = t.title; document.getElementById('taskType').value = t.type; document.getElementById('taskStatus').value = t.status; document.getElementById('taskDate').value = t.date || ''; document.getElementById('taskViews').value = t.views || ''; document.getElementById('taskLink').value = t.link || ''; document.getElementById('formTitleText').innerText = 'Update Jadwal'; const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data'; btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancel').style.display = 'block'; document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         function cancelEdit() {
-            editingId = null;
-            document.getElementById('taskTitle').value = ''; document.getElementById('taskType').value = 'VLOG';
-            document.getElementById('taskStatus').value = 'Rencana'; document.getElementById('taskDate').value = '';
-            document.getElementById('taskViews').value = ''; document.getElementById('taskLink').value = '';
-            
-            document.getElementById('formTitleText').innerText = 'Form Kegiatan';
-            const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Simpan Data';
-            btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancel').style.display = 'none';
+            editingId = null; document.getElementById('taskTitle').value = ''; document.getElementById('taskType').value = 'VLOG'; document.getElementById('taskStatus').value = 'Rencana'; document.getElementById('taskDate').value = ''; document.getElementById('taskViews').value = ''; document.getElementById('taskLink').value = ''; document.getElementById('formTitleText').innerText = 'Form Kegiatan'; const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Simpan Data'; btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancel').style.display = 'none';
         }
-
         function saveTask() {
-            const title = document.getElementById('taskTitle').value; if(!title) return alert('Judul wajib diisi!');
-            let actionType = 'tambah';
-            let taskObj = {
-                id: editingId || Date.now().toString(), title: title, type: document.getElementById('taskType').value, status: document.getElementById('taskStatus').value,
-                date: document.getElementById('taskDate').value, time: '', link: document.getElementById('taskLink').value, views: document.getElementById('taskViews').value || 0, note: ''
-            };
+            const title = document.getElementById('taskTitle').value; if(!title) return alert('Judul wajib diisi!'); let actionType = 'tambah';
+            let taskObj = { id: editingId || Date.now().toString(), title: title, type: document.getElementById('taskType').value, status: document.getElementById('taskStatus').value, date: document.getElementById('taskDate').value, time: '', link: document.getElementById('taskLink').value, views: document.getElementById('taskViews').value || 0, note: '' };
             if (editingId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingId); if(idx !== -1) tasks[idx] = taskObj; } 
             else { tasks.push(taskObj); }
             cancelEdit(); renderAll(); sendToCloud(actionType, taskObj);
         }
-
-        function delTask(id) {
-            if(confirm('Hapus jadwal ini?')) {
-                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
-                if (editingId === id) cancelEdit(); renderAll(); sendToCloud('hapus', tk);
-            }
-        }
-
+        function delTask(id) { if(confirm('Hapus jadwal ini?')) { const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); if (editingId === id) cancelEdit(); renderAll(); sendToCloud('hapus', tk); } }
         function startDictation() {
-            const btn = document.querySelector('.mic-btn');
-            if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
-                const SpeechRec = window.webkitSpeechRecognition || window.SpeechRecognition; const rec = new SpeechRec();
-                rec.lang = 'id-ID'; rec.continuous = false; rec.interimResults = false;
-                rec.onstart = () => { btn.classList.add('recording'); document.getElementById('taskTitle').placeholder = "Mendengarkan..."; };
-                rec.onresult = (e) => { document.getElementById('taskTitle').value = e.results[0][0].transcript; };
-                rec.onerror = (e) => { alert("Izinkan akses mikrofon di pengaturan browser Anda."); };
-                rec.onend = () => { btn.classList.remove('recording'); document.getElementById('taskTitle').placeholder = "Contoh: Rilis Produk / Syuting..."; };
-                rec.start();
+            const btn = document.querySelector('.mic-btn'); if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
+                const SpeechRec = window.webkitSpeechRecognition || window.SpeechRecognition; const rec = new SpeechRec(); rec.lang = 'id-ID'; rec.continuous = false; rec.interimResults = false;
+                rec.onstart = () => { btn.classList.add('recording'); document.getElementById('taskTitle').placeholder = "Mendengarkan..."; }; rec.onresult = (e) => { document.getElementById('taskTitle').value = e.results[0][0].transcript; }; rec.onerror = (e) => { alert("Izinkan akses mikrofon di browser."); }; rec.onend = () => { btn.classList.remove('recording'); document.getElementById('taskTitle').placeholder = "Contoh: Rilis Produk / Syuting..."; }; rec.start();
             } else { alert('Gunakan Google Chrome untuk fitur Suara.'); }
         }
 
-        // --- MODULE UMKM ---
-        function saveUmkm() {
-            let n = document.getElementById('umkmName').value; let ty = document.getElementById('umkmType').value; let tg = document.getElementById('umkmTarget').value;
-            if(!n) return alert('Nama UMKM wajib diisi');
-            let taskObj = { id: Date.now().toString(), title: `[UMKM] ${n}`, type: 'PROMOTE', status: 'Rencana', date: tg, time: '', link: '', views: 0, note: ty };
-            tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj);
-            document.getElementById('umkmName').value = ''; document.getElementById('umkmType').value = ''; alert("UMKM ditambahkan ke Kalender Proyek.");
-        }
-        function renderUMKM() {
-            const uList = tasks.filter(t => t.type === 'PROMOTE' && t.title.includes('[UMKM]'));
-            const tb = document.getElementById('umkmBody'); tb.innerHTML = '';
-            uList.forEach(u => {
-                tb.innerHTML += `<tr><td>${u.date ? new Date(u.date).toLocaleDateString('id-ID') : '-'}</td>
-                <td><strong>${String(u.title).replace('[UMKM] ', '')}</strong></td><td>${u.note || '-'}</td></tr>`;
-            });
-        }
-
-        // --- MODULE KEUANGAN ---
+        // --- MODULE UMKM & KEUANGAN & KONTAK ---
+        function saveUmkm() { let n = document.getElementById('umkmName').value; let ty = document.getElementById('umkmType').value; let tg = document.getElementById('umkmTarget').value; if(!n) return alert('Nama UMKM wajib diisi'); let taskObj = { id: Date.now().toString(), title: `[UMKM] ${n}`, type: 'PROMOTE', status: 'Rencana', date: tg, time: '', link: '', views: 0, note: ty }; tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj); document.getElementById('umkmName').value = ''; document.getElementById('umkmType').value = ''; alert("UMKM ditambahkan ke Kalender Proyek."); }
+        function renderUMKM() { const uList = tasks.filter(t => t.type === 'PROMOTE' && t.title.includes('[UMKM]')); const tb = document.getElementById('umkmBody'); tb.innerHTML = ''; uList.forEach(u => { tb.innerHTML += `<tr><td>${u.date ? new Date(u.date).toLocaleDateString('id-ID') : '-'}</td><td><strong>${String(u.title).replace('[UMKM] ', '')}</strong></td><td>${u.note || '-'}</td></tr>`; }); }
+        
+        function saveFinance() { let amt = document.getElementById('finAmount').value; let note = document.getElementById('finNote').value; if(!amt || !note) return alert('Isi Nominal & Keterangan'); let actionType = 'tambah'; let taskObj = { id: editingFinId || Date.now().toString(), title: `[KEUANGAN] ${note}`, type: 'KEUANGAN', status: document.getElementById('finType').value, date: document.getElementById('finDate').value, time: '', link: '', views: amt, note: '' }; if (editingFinId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingFinId); if(idx !== -1) tasks[idx] = taskObj; } else { tasks.push(taskObj); } cancelEditFinance(); renderAll(); sendToCloud(actionType, taskObj); }
         function renderFinance() {
-            const fList = tasks.filter(t => t.type === 'KEUANGAN');
-            const tb = document.getElementById('finBody'); tb.innerHTML = '';
-            let tIn = 0; let tOut = 0;
-            
-            fList.reverse().forEach(f => {
-                let isInc = f.status === 'INCOME'; let amt = parseInt(f.views) || 0;
-                if(isInc) tIn += amt; else tOut += amt;
-                tb.innerHTML += `
-                    <tr>
-                        <td>${f.date ? new Date(f.date).toLocaleDateString('id-ID') : '-'}</td>
-                        <td><span class="badge ${isInc ? 'bg-green' : 'bg-red'}" style="background:${isInc?'#dcfce3':'#fee2e2'};color:${isInc?'#166534':'#991b1b'}">${isInc ? 'Masuk' : 'Keluar'}</span></td>
-                        <td>${String(f.title).replace('[KEUANGAN] ', '')}</td>
-                        <td style="font-weight:bold">${formatRp(amt)}</td>
-                        <td class="admin-only">
-                            <button class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px;" onclick="editFinance('${f.id}')"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delFinance('${f.id}')"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>`;
-            });
-            let saldoAkhir = tIn - tOut;
-            document.getElementById('totIn').innerText = formatRp(tIn); document.getElementById('totOut').innerText = formatRp(tOut);
-            document.getElementById('totSaldo').innerText = formatRp(saldoAkhir);
+            const fList = tasks.filter(t => t.type === 'KEUANGAN'); const tb = document.getElementById('finBody'); tb.innerHTML = ''; let tIn = 0; let tOut = 0;
+            fList.reverse().forEach(f => { let isInc = f.status === 'INCOME'; let amt = parseInt(f.views) || 0; if(isInc) tIn += amt; else tOut += amt; tb.innerHTML += `<tr><td>${f.date ? new Date(f.date).toLocaleDateString('id-ID') : '-'}</td><td><span class="badge ${isInc ? 'bg-green' : 'bg-red'}" style="background:${isInc?'#dcfce3':'#fee2e2'};color:${isInc?'#166534':'#991b1b'}">${isInc ? 'Masuk' : 'Keluar'}</span></td><td>${String(f.title).replace('[KEUANGAN] ', '')}</td><td style="font-weight:bold">${formatRp(amt)}</td><td class="admin-only"><button class="btn btn-sm btn-outline" style="padding:4px 8px; margin-right:4px;" onclick="editFinance('${f.id}')"><i class="fas fa-pen"></i></button><button class="btn btn-sm btn-danger" style="padding:4px 8px;" onclick="delFinance('${f.id}')"><i class="fas fa-trash"></i></button></td></tr>`; });
+            let saldoAkhir = tIn - tOut; let pctOut = tIn > 0 ? Math.round((tOut / tIn) * 100) : 0; let pctSaldo = tIn > 0 ? Math.round((saldoAkhir / tIn) * 100) : 0;
+            document.getElementById('totIn').innerHTML = `${formatRp(tIn)}`; document.getElementById('totOut').innerHTML = `${formatRp(tOut)} <br><span style="font-size:12px; font-weight:normal; opacity:0.8;">(${pctOut}% dari Pemasukan)</span>`; document.getElementById('totSaldo').innerHTML = `${formatRp(saldoAkhir)} <br><span style="font-size:12px; font-weight:normal; opacity:0.8;">(${pctSaldo}% dari Pemasukan)</span>`;
             if(saldoAkhir < 0) { document.getElementById('totSaldo').style.color = 'var(--danger)'; } else { document.getElementById('totSaldo').style.color = 'var(--info)'; }
             if(fList.length === 0) tb.innerHTML = '<tr><td colspan="5" align="center" style="color:#64748b; padding:20px;">Belum ada riwayat transaksi.</td></tr>';
         }
+        function editFinance(id) { const f = tasks.find(x => x.id === id); if(!f) return; editingFinId = id; document.getElementById('finType').value = f.status; document.getElementById('finAmount').value = parseInt(f.views) || 0; document.getElementById('finNote').value = String(f.title).replace('[KEUANGAN] ', ''); document.getElementById('finDate').value = f.date || ''; document.getElementById('finFormTitle').innerText = 'Update Transaksi'; const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data'; btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancelFin').style.display = 'block'; document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' }); }
+        function cancelEditFinance() { editingFinId = null; document.getElementById('finType').value = 'INCOME'; document.getElementById('finAmount').value = ''; document.getElementById('finNote').value = ''; document.getElementById('finDate').value = ''; document.getElementById('finFormTitle').innerText = 'Input Transaksi'; const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Catat Transaksi'; btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancelFin').style.display = 'none'; }
+        function delFinance(id) { if(confirm('Hapus transaksi ini?')) { const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); if (editingFinId === id) cancelEditFinance(); renderAll(); sendToCloud('hapus', tk); } }
+        
+        function saveKontak() { let n = document.getElementById('ktkName').value; let r = document.getElementById('ktkRole').value; let w = document.getElementById('ktkWA').value; if(!n || !w) return alert('Nama dan Nomor WA wajib diisi!'); let cleanWA = w.toString().replace(/\D/g,''); if(cleanWA.startsWith('0')) cleanWA = '62' + cleanWA.substring(1); let taskObj = { id: Date.now().toString(), title: `[KONTAK] ${n}`, type: 'KONTAK', status: 'Aktif', date: new Date().toISOString().split('T')[0], time: '', link: cleanWA, views: 0, note: r }; tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj); document.getElementById('ktkName').value = ''; document.getElementById('ktkRole').value = ''; document.getElementById('ktkWA').value = ''; }
+        function renderKontak() { const kList = tasks.filter(t => t.type === 'KONTAK'); const tb = document.getElementById('kontakBody'); tb.innerHTML = ''; kList.forEach(k => { let name = String(k.title).replace('[KONTAK] ', ''); let waLink = `https://wa.me/${k.link}`; tb.innerHTML += `<div class="contact-card"><div class="contact-avatar"><i class="fas fa-user"></i></div><div class="contact-name">${name}</div><div class="contact-role">${k.note || '-'}</div><a href="${waLink}" target="_blank" class="btn btn-success" style="width:100%; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WA</a><button class="btn btn-sm btn-outline admin-only" style="margin-top:10px; width:100%; border-color:var(--danger); color:var(--danger);" onclick="delKontak('${k.id}')"><i class="fas fa-trash"></i> Hapus</button></div>`; }); if(kList.length === 0) tb.innerHTML = '<p style="color:#64748b; text-align:center; grid-column:1/-1;">Belum ada kontak tim yang dimasukkan.</p>'; }
+        function delKontak(id) { if(confirm('Hapus kontak anggota ini?')) { const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); renderAll(); sendToCloud('hapus', tk); } }
 
-        function editFinance(id) {
-            const f = tasks.find(x => x.id === id); if(!f) return; editingFinId = id;
-            document.getElementById('finType').value = f.status; document.getElementById('finAmount').value = parseInt(f.views) || 0;
-            document.getElementById('finNote').value = String(f.title).replace('[KEUANGAN] ', ''); document.getElementById('finDate').value = f.date || '';
-            document.getElementById('finFormTitle').innerText = 'Update Transaksi';
-            const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-sync-alt"></i> Update Data';
-            btnSubmit.classList.replace('btn-primary', 'btn-success'); document.getElementById('btnCancelFin').style.display = 'block';
-            document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+        // --- MODULE INTERNAL CHAT FORUM ---
+        function saveChat() { let msg = document.getElementById('chatInput').value; if(!msg) return; let senderName = localStorage.getItem('bapakin_name') || 'Anggota Tim'; let taskObj = { id: Date.now().toString(), title: senderName, type: 'CHAT', status: 'Aktif', date: new Date().toISOString(), time: '', link: '', views: 0, note: msg }; tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj); document.getElementById('chatInput').value = ''; }
+        function renderChat() { const cList = tasks.filter(t => t.type === 'CHAT'); const tb = document.getElementById('chatBody'); tb.innerHTML = ''; let myName = localStorage.getItem('bapakin_name') || ''; cList.forEach(c => { let isMine = (c.title === myName); let bubbleClass = isMine ? 'mine' : 'other'; let timeStr = c.date ? new Date(c.date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : ''; tb.innerHTML += `<div class="chat-bubble ${bubbleClass}"><button class="btn-del-chat" onclick="delChat('${c.id}')" title="Hapus Pesan"><i class="fas fa-times-circle"></i></button><span class="chat-sender">${c.title}</span>${c.note}<span class="chat-date">${timeStr}</span></div>`; }); if(cList.length === 0) tb.innerHTML = '<div style="text-align:center; color:#94a3b8; margin-top:50px;">Belum ada obrolan. Mulai sapa tim Anda!</div>'; scrollChatToBottom(); }
+        function delChat(id) { if(confirm('Hapus pesan ini dari forum?')) { const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); renderAll(); sendToCloud('hapus', tk); } }
+        function scrollChatToBottom() { const chatBox = document.getElementById('chatBody'); chatBox.scrollTop = chatBox.scrollHeight; }
+
+        // --- MODULE SIMULASI R&D PRODUKSI ---
+        let uploadedImageB64 = ''; 
+
+        function compressImage(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas'); const MAX_WIDTH = 300; let scaleSize = 1;
+                    if(img.width > MAX_WIDTH) { scaleSize = MAX_WIDTH / img.width; }
+                    canvas.width = img.width * scaleSize; canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    uploadedImageB64 = canvas.toDataURL('image/jpeg', 0.6); 
+                    document.getElementById('imgPreviewContainer').style.display = 'block'; document.getElementById('imgPreview').src = uploadedImageB64;
+                }
+            }
         }
 
-        function cancelEditFinance() {
-            editingFinId = null; document.getElementById('finType').value = 'INCOME'; document.getElementById('finAmount').value = '';
-            document.getElementById('finNote').value = ''; document.getElementById('finDate').value = '';
-            document.getElementById('finFormTitle').innerText = 'Input Transaksi';
-            const btnSubmit = document.getElementById('btnSubmitFin'); btnSubmit.innerHTML = '<i class="fas fa-save"></i> Catat Transaksi';
-            btnSubmit.classList.replace('btn-success', 'btn-primary'); document.getElementById('btnCancelFin').style.display = 'none';
+        function calcHPP() { 
+            let modal = parseFloat(document.getElementById('prodModal').value) || 0; 
+            let qty = parseFloat(document.getElementById('prodQty').value) || 1; 
+            let hpp = (qty > 0) ? (modal / qty) : 0; 
+            let suggest = hpp * 1.5; 
+            document.getElementById('prodJual').value = suggest;
+            calcProfitManual(); 
         }
 
-        function saveFinance() {
-            let amt = document.getElementById('finAmount').value; let note = document.getElementById('finNote').value;
-            if(!amt || !note) return alert('Isi Nominal & Keterangan');
+        function calcProfitManual() {
+            let modal = parseFloat(document.getElementById('prodModal').value) || 0; 
+            let qty = parseFloat(document.getElementById('prodQty').value) || 1; 
+            let hpp = (qty > 0) ? (modal / qty) : 0; 
+            
+            let jual = parseFloat(document.getElementById('prodJual').value) || 0;
+            let totalPendapatan = jual * qty;
+            let estimasiProfit = totalPendapatan - modal;
+
+            document.getElementById('labelHPP').innerText = formatRp(hpp); 
+            document.getElementById('labelTotalJual').innerText = formatRp(totalPendapatan);
+            document.getElementById('labelProfit').innerText = formatRp(estimasiProfit);
+        }
+
+        function saveProduksi(statusRilis) {
+            let n = document.getElementById('prodName').value; if(!n) return alert('Nama produk wajib diisi!');
+            let modal = document.getElementById('prodModal').value || 0;
+            let qty = document.getElementById('prodQty').value || 1;
+            let jual = document.getElementById('prodJual').value || 0;
+            let finalImgLink = uploadedImageB64 || document.getElementById('prodImgLink').value || '';
+
             let actionType = 'tambah';
-            let taskObj = { id: editingFinId || Date.now().toString(), title: `[KEUANGAN] ${note}`, type: 'KEUANGAN', status: document.getElementById('finType').value, date: document.getElementById('finDate').value, time: '', link: '', views: amt, note: '' };
-            if (editingFinId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingFinId); if(idx !== -1) tasks[idx] = taskObj; } 
-            else { tasks.push(taskObj); }
-            cancelEditFinance(); renderAll(); sendToCloud(actionType, taskObj);
-        }
-
-        function delFinance(id) {
-            if(confirm('Hapus transaksi ini? Saldo otomatis menyesuaikan.')) {
-                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
-                if (editingFinId === id) cancelEditFinance(); renderAll(); sendToCloud('hapus', tk);
-            }
-        }
-
-        // --- MODULE KONTAK TIM WA ---
-        function saveKontak() {
-            let n = document.getElementById('ktkName').value; let r = document.getElementById('ktkRole').value; let w = document.getElementById('ktkWA').value;
-            if(!n || !w) return alert('Nama dan Nomor WA wajib diisi!');
-            
-            // Format nomor telepon menjadi 62... (menghilangkan awalan 0)
-            let cleanWA = w.toString().replace(/\D/g,'');
-            if(cleanWA.startsWith('0')) cleanWA = '62' + cleanWA.substring(1);
-
-            let taskObj = {
-                id: Date.now().toString(), title: `[KONTAK] ${n}`, type: 'KONTAK', status: 'Aktif', 
-                date: new Date().toISOString().split('T')[0], time: '', link: cleanWA, views: 0, note: r
+            let taskObj = { 
+                id: editingProdId || Date.now().toString(), title: n, type: 'PRODUKSI', status: statusRilis, 
+                date: new Date().toISOString().split('T')[0], time: jual, link: finalImgLink, views: modal, note: qty 
             };
-            tasks.push(taskObj); renderAll(); sendToCloud('tambah', taskObj);
-            document.getElementById('ktkName').value = ''; document.getElementById('ktkRole').value = ''; document.getElementById('ktkWA').value = '';
-        }
-
-        function renderKontak() {
-            const kList = tasks.filter(t => t.type === 'KONTAK');
-            const tb = document.getElementById('kontakBody'); tb.innerHTML = '';
             
-            kList.forEach(k => {
-                let name = String(k.title).replace('[KONTAK] ', '');
-                let waLink = `https://wa.me/${k.link}`;
-                
-                tb.innerHTML += `
-                    <div class="contact-card">
-                        <div class="contact-avatar"><i class="fas fa-user"></i></div>
-                        <div class="contact-name">${name}</div>
-                        <div class="contact-role">${k.note || '-'}</div>
-                        <a href="${waLink}" target="_blank" class="btn btn-success" style="width:100%; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WA</a>
-                        <button class="btn btn-sm btn-outline admin-only" style="margin-top:10px; width:100%; border-color:var(--danger); color:var(--danger);" onclick="delKontak('${k.id}')"><i class="fas fa-trash"></i> Hapus</button>
-                    </div>
-                `;
-            });
-            if(kList.length === 0) tb.innerHTML = '<p style="color:#64748b; text-align:center; grid-column:1/-1;">Belum ada kontak tim yang dimasukkan.</p>';
+            if (editingProdId) { actionType = 'update'; const idx = tasks.findIndex(t => t.id === editingProdId); if(idx !== -1) tasks[idx] = taskObj; } 
+            else { tasks.push(taskObj); }
+            
+            renderAll(); sendToCloud(actionType, taskObj);
+            cancelEditProduksi();
+            
+            if(statusRilis === 'Published') alert("Sukses! Produk di-publish ke Dashboard Tim.");
+            else alert("Tersimpan sebagai Draft (Hanya Super Admin).");
         }
 
-        function delKontak(id) {
-            if(confirm('Hapus kontak anggota ini?')) {
-                const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id);
-                renderAll(); sendToCloud('hapus', tk);
+        function editProduksi(id) {
+            const p = tasks.find(x => x.id === id); if(!p) return;
+            editingProdId = id;
+            document.getElementById('prodName').value = p.title; document.getElementById('prodModal').value = p.views;
+            document.getElementById('prodQty').value = p.note; document.getElementById('prodJual').value = p.time || 0;
+            document.getElementById('prodImgLink').value = p.link || '';
+            
+            uploadedImageB64 = ''; document.getElementById('imgPreviewContainer').style.display = 'none';
+            calcProfitManual();
+
+            document.getElementById('prodFormTitle').innerText = 'Update Rencana R&D';
+            const btnDraft = document.getElementById('btnDraftProd'); btnDraft.innerHTML = '<i class="fas fa-sync"></i> Update Draft';
+            const btnPub = document.getElementById('btnPubProd'); btnPub.innerHTML = '<i class="fas fa-bullhorn"></i> Update & Publish';
+            document.getElementById('btnCancelProd').style.display = 'block'; document.getElementById('mainScrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEditProduksi() {
+            editingProdId = null;
+            document.getElementById('prodName').value = ''; document.getElementById('prodImgLink').value = '';
+            document.getElementById('prodModal').value = ''; document.getElementById('prodQty').value = '1';
+            document.getElementById('prodJual').value = ''; document.getElementById('prodImgFile').value = ''; 
+            uploadedImageB64 = ''; document.getElementById('imgPreviewContainer').style.display = 'none';
+            calcHPP(); 
+
+            document.getElementById('prodFormTitle').innerText = 'Kalkulator R&D Produk Baru';
+            const btnDraft = document.getElementById('btnDraftProd'); btnDraft.innerHTML = '<i class="fas fa-save"></i> Simpan Draft';
+            const btnPub = document.getElementById('btnPubProd'); btnPub.innerHTML = '<i class="fas fa-bullhorn"></i> Publish ke Tim';
+            document.getElementById('btnCancelProd').style.display = 'none';
+        }
+
+        function renderProduksi() {
+            const pList = tasks.filter(t => t.type === 'PRODUKSI');
+            const tb = document.getElementById('prodBody'); 
+            if(tb) {
+                tb.innerHTML = '';
+                pList.reverse().forEach(p => {
+                    let modal = parseFloat(p.views) || 0; let qty = parseFloat(p.note) || 1; let jual = parseFloat(p.time) || 0; 
+                    let hpp = qty > 0 ? (modal / qty) : 0; let profit = (jual * qty) - modal;
+                    let bClass = p.status === 'Published' ? 'bg-gold' : 'bg-gray';
+
+                    tb.innerHTML += `
+                        <tr>
+                            <td><span class="badge ${bClass}">${p.status}</span></td>
+                            <td><strong>${p.title}</strong><br><small style="color:var(--success); font-weight:bold;">Profit: ${formatRp(profit)}</small></td>
+                            <td><small style="color:#64748b;">HPP:</small> ${formatRp(hpp)}<br><small style="color:#64748b;">Jual:</small> ${formatRp(jual)}</td>
+                            <td>
+                                <div style="display:flex; flex-direction:column; gap:5px;">
+                                    <button class="btn btn-sm btn-outline" style="padding:4px;" onclick="editProduksi('${p.id}')"><i class="fas fa-pen"></i></button>
+                                    <button class="btn btn-sm btn-danger" style="padding:4px;" onclick="delProduksi('${p.id}')"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+                if(pList.length === 0) tb.innerHTML = '<tr><td colspan="4" align="center" style="color:#64748b;">Belum ada rencana produksi.</td></tr>';
             }
+
+            // Banner Coming Soon
+            const pubProd = pList.filter(p => p.status === 'Published');
+            const banner = document.getElementById('comingSoonBanner'); const bannerBody = document.getElementById('comingSoonBody');
+            
+            if(pubProd.length > 0) {
+                banner.style.display = 'block'; bannerBody.innerHTML = '';
+                pubProd.forEach(p => {
+                    let imgSrc = p.link ? p.link : 'https://via.placeholder.com/50?text=Baru';
+                    // Tambahkan onClick untuk buka Modal Detail
+                    bannerBody.innerHTML += `
+                        <div class="prod-card-mini" onclick="openProdModal('${p.id}')" title="Klik untuk melihat detail proyeksi keuntungan">
+                            <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/50?text=?'" alt="Produk">
+                            <div class="prod-info">
+                                <h4>${p.title}</h4>
+                                <p style="color:var(--gold); font-weight:bold; font-size:10px;"><i class="fas fa-search-plus"></i> Lihat Potensi Profit</p>
+                            </div>
+                        </div>`;
+                });
+            } else { banner.style.display = 'none'; }
         }
 
-        // --- MODULE ANALITIK & GRAFIK ---
+        function delProduksi(id) { if(confirm('Hapus data rencana ini?')) { const tk = tasks.find(t => t.id === id); tasks = tasks.filter(t => t.id !== id); if(editingProdId === id) cancelEditProduksi(); renderAll(); sendToCloud('hapus', tk); } }
+
+        // --- MODULE POPUP R&D ZOOM FOTO (HPP DIRAHASIAKAN) ---
+        function openProdModal(id) {
+            const p = tasks.find(t => t.id === id);
+            if(!p) return;
+            
+            let modalCost = parseFloat(p.views) || 0; 
+            let qty = parseFloat(p.note) || 1; 
+            let jual = parseFloat(p.time) || 0; 
+            let profit = (jual * qty) - modalCost;
+            let imgSrc = p.link ? p.link : 'https://via.placeholder.com/300?text=Gambar+Produk';
+
+            document.getElementById('mProdTitle').innerText = p.title;
+            document.getElementById('mProdImg').src = imgSrc;
+            document.getElementById('mProdJual').innerText = formatRp(jual);
+            document.getElementById('mProdProfit').innerText = formatRp(profit);
+            
+            document.getElementById('prodModal').style.display = 'flex';
+        }
+
+        function closeProdModal() {
+            document.getElementById('prodModal').style.display = 'none';
+        }
+
+        // --- MODULE ANALITIK & PROGRESS BAR ---
         function drawCharts() {
             if (!tasks || tasks.length === 0) return;
             try {
-                // Filter agar Keuangan dan Kontak tidak masuk hitungan pie chart
-                const mTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK');
-                let v = 0; let d = 0; let types = {}; 
-                mTasks.forEach(t => { 
-                    v += parseInt(t.views) || 0; 
-                    if(t.status === 'Tayang') d++;
-                    let tType = t.type || 'LAINNYA';
-                    types[tType] = (types[tType] || 0) + 1;
-                });
-                document.getElementById('totViews').innerText = v.toLocaleString('id-ID');
-                document.getElementById('totDone').innerText = d;
-
+                const mTasks = tasks.filter(t => t.type !== 'KEUANGAN' && t.type !== 'KONTAK' && t.type !== 'CHAT' && t.type !== 'PRODUKSI');
+                let v = 0; let d = 0; let totalP = mTasks.length; let types = {}; 
+                mTasks.forEach(t => { v += parseInt(t.views) || 0; if(t.status === 'Tayang') d++; let tType = t.type || 'LAINNYA'; types[tType] = (types[tType] || 0) + 1; });
+                let pct = totalP === 0 ? 0 : Math.round((d / totalP) * 100);
+                document.getElementById('totProject').innerText = totalP; document.getElementById('totDone').innerText = d; document.getElementById('totProgress').innerText = pct + '%'; document.getElementById('totViews').innerText = v.toLocaleString('id-ID');
+                document.getElementById('progressBarText').innerText = pct + '% (' + d + ' dari ' + totalP + ' Proyek)'; document.getElementById('progressBarFill').style.width = pct + '%';
                 if(pChart) pChart.destroy(); if(bChart) bChart.destroy();
-
-                const pCtx = document.getElementById('pieChart').getContext('2d');
-                pChart = new Chart(pCtx, {
-                    type: 'doughnut',
-                    data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#64748b'] }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {font:{size:10}} } } }
-                });
-
+                const pCtx = document.getElementById('pieChart').getContext('2d'); pChart = new Chart(pCtx, { type: 'doughnut', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#64748b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {font:{size:10}} } } } });
                 let top = [...mTasks].sort((a,b) => (parseInt(b.views)||0) - (parseInt(a.views)||0)).slice(0,5);
-                const bCtx = document.getElementById('barChart').getContext('2d');
-                bChart = new Chart(bCtx, {
-                    type: 'bar',
-                    data: { 
-                        labels: top.map(t => {
-                            let safeTitle = String(t.title || 'Tanpa Judul');
-                            return safeTitle.length > 12 ? safeTitle.substring(0,12) + '...' : safeTitle;
-                        }), 
-                        datasets: [{ label: 'Views', data: top.map(t => parseInt(t.views) || 0), backgroundColor: '#f59e0b', borderRadius: 4 }] 
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-                });
-            } catch (err) { console.log("Menunggu sinkronisasi data grafik...", err); }
+                const bCtx = document.getElementById('barChart').getContext('2d'); bChart = new Chart(bCtx, { type: 'bar', data: { labels: top.map(t => { let safeTitle = String(t.title || 'Tanpa Judul'); return safeTitle.length > 12 ? safeTitle.substring(0,12) + '...' : safeTitle; }), datasets: [{ label: 'Views', data: top.map(t => parseInt(t.views) || 0), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+            } catch (err) { console.log("Menunggu sinkronisasi grafik...", err); }
         }
 
         window.onload = cekSesiLogin;
